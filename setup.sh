@@ -67,4 +67,6 @@ test 0 -eq $? && echo "[OK]" || echo "[FAIL]"
 #	cp dhcpd.conf /etc/dhcp/
 #fi
 
+sync
+
 echo   "Setup completed successfully! Reboot the board ......... "
