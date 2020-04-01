@@ -39,7 +39,7 @@ test 0 -eq $? && echo "[OK]" || echo "[FAIL]"
 
 #install dependencies
 printf "Installing dependencies ................................ "
-DEBIAN_FRONTEND=noninteractive apt-get install -qq avahi-daemon avahi-discover libnss-mdns avahi-utils #isc-dhcp-server curl
+DEBIAN_FRONTEND=noninteractive apt-get install -qq avahi-daemon avahi-discover libnss-mdns avahi-utils < /dev/null > /dev/null
 test 0 -eq $? && echo "[OK]" || echo "[FAIL]"
 
 
