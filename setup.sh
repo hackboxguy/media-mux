@@ -63,8 +63,8 @@ test 0 -eq $? && echo "[OK]" || echo "[FAIL]"
 
 
 printf "Enabling ssh server .................................... "
-systemctl enable ssh > /dev/null
-systemctl start ssh > /dev/null
+systemctl enable ssh 1>/dev/null 2>/dev/null
+systemctl start ssh 1>/dev/null 2>/dev/null
 test 0 -eq $? && echo "[OK]" || echo "[FAIL]"
 
 
