@@ -61,7 +61,19 @@ printf "Customizing rc.local ................................... "
 cp rc.local /etc/
 test 0 -eq $? && echo "[OK]" || echo "[FAIL]"
 
-#for master, prepare dhcp server
+
+printf "Enabling ssh server .................................... "
+systemctl enable ssh
+systemctl start ssh
+test 0 -eq $? && echo "[OK]" || echo "[FAIL]"
+
+
+printf "Forcing audio output to analog-out ..................... "
+amixer cset numid=3 1 #0-automatic 1-analog 2-hdmi
+test 0 -eq $? && echo "[OK]" || echo "[FAIL]"
+
+
+#for master, enable dhcp server
 #if [ $NUM = "0001" ]; then
 #	sudo apt-get -y install isc-dhcp-server
 #	cp dhcpd.conf /etc/dhcp/
