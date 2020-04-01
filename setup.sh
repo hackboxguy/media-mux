@@ -29,6 +29,7 @@ case $SLAVE_NUM in
 esac
 
 printf "Installing auto-startup-player ......................... "
+rm -rf media-mux-autoplay.sh >/dev/null #remove any existing solft-link
 if [ $NUM = "0001" ]; then
 	ln -s media-mux-autoplay-master.sh media-mux-autoplay.sh
 else
