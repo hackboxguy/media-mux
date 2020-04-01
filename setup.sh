@@ -28,23 +28,37 @@ case $SLAVE_NUM in
 		NUM=$(printf "%04d" $SLAVE_NUM) ;;
 esac
 
+printf "Installing auto-startup-player ......................... "
 if [ $NUM = "0001" ]; then
 	ln -s media-mux-autoplay-master.sh media-mux-autoplay.sh
 else
 	ln -s media-mux-autoplay-slave.sh media-mux-autoplay.sh
 fi
+test 0 -eq $? && echo "[OK]" || echo "[FAIL]"
+
 
 #install dependencies
-sudo apt-get -y install avahi-daemon avahi-discover libnss-mdns avahi-utils #isc-dhcp-server curl
+printf "Installing dependencies ................................ "
+DEBIAN_FRONTEND=noninteractive apt-get install -qq avahi-daemon avahi-discover libnss-mdns avahi-utils #isc-dhcp-server curl
+test 0 -eq $? && echo "[OK]" || echo "[FAIL]"
+
 
 #prepare avahi publish 
+printf "Preparing for avahi-publish ............................ "
 sed -i "s/media-mux-\(.*\)/media-mux-$NUM\"/g" avahi-publish-media-mux.sh
+test 0 -eq $? && echo "[OK]" || echo "[FAIL]"
+
 
 #set hostname
+printf "Setting hostname ....................................... "
 echo "media-mux-$NUM" > /etc/hostname
+test 0 -eq $? && echo "[OK]" || echo "[FAIL]"
+
 
 #setup auto startup script
-cp rc.local to /etc/
+printf "Customizing rc.local ................................... "
+cp rc.local /etc/
+test 0 -eq $? && echo "[OK]" || echo "[FAIL]"
 
 #for master, prepare dhcp server
 #if [ $NUM = "0001" ]; then
@@ -52,4 +66,4 @@ cp rc.local to /etc/
 #	cp dhcpd.conf /etc/dhcp/
 #fi
 
-echo "Setup completed successfully, please reboot the board"
+echo   "Setup completed successfully! Reboot the board ......... "
