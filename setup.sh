@@ -63,13 +63,13 @@ test 0 -eq $? && echo "[OK]" || echo "[FAIL]"
 
 
 printf "Enabling ssh server .................................... "
-systemctl enable ssh
-systemctl start ssh
+systemctl enable ssh > /dev/null
+systemctl start ssh > /dev/null
 test 0 -eq $? && echo "[OK]" || echo "[FAIL]"
 
 
 printf "Forcing audio output to analog-out ..................... "
-amixer cset numid=3 1 #0-automatic 1-analog 2-hdmi
+amixer cset numid=3 1 > /dev/null #0-automatic 1-analog 2-hdmi
 test 0 -eq $? && echo "[OK]" || echo "[FAIL]"
 
 
