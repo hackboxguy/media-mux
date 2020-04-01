@@ -35,10 +35,10 @@ else
 fi
 
 #install dependencies
-sudo apt-get -y install avahi-daemon avahi-discover libnss-mdns avahi-utils isc-dhcp-server #curl
+sudo apt-get -y install avahi-daemon avahi-discover libnss-mdns avahi-utils #isc-dhcp-server curl
 
 #prepare avahi publish 
-sed -i "s/media-mux-\(.*\)/media-mux-$NUM/g" avahi-publish-media-mux.sh
+sed -i "s/media-mux-\(.*\)/media-mux-$NUM\"/g" avahi-publish-media-mux.sh
 
 #set hostname
 echo "media-mux-$NUM" > /etc/hostname
