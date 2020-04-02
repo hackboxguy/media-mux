@@ -31,29 +31,34 @@ fi
 
 if [ $ACTION = "status" ]; then
 	RES=$(curl -s -G -H "Authorization: Basic $PASSWD" "http://$IPADDR:$APIPORT/requests/status.xml" | grep state)
-	[ $? != "0" ] && echo "Error: action failed! unable to read player status (check if password is correct)" && exit 1
+	[ $? != "0" ] && echo "Error: action failed! unable to read player status for ip $IPADDR (check if password is correct)" && exit 1
 	if [ $RES = "<state>stopped</state>" ]; then
-		echo "Player-state: Stopped"	
+		echo "Player-state: Stopped : $IPADDR"	
+		elif [ $RES = "<state>stopped</state><information>" ]; then
+		echo "Player-state: Stopped : $IPADDR"	
         elif [ $RES = "<state>playing</state>" ]; then
-		echo "Player-state: Playing"	
+		echo "Player-state: Playing : $IPADDR"	
+		elif [ $RES = "<state>playing</state><information>" ]; then
+		echo "Player-state: Playing : $IPADDR"	
 	else
-		echo "Player-state: $RES"	
+		echo "Player-state: $RES : $IPADDR"	
 	fi
 elif [ $ACTION = "volume" ]; then
 	if [ $VALUE = "none" ]; then
 		RES=$(curl -s -G -H "Authorization: Basic $PASSWD" "http://$IPADDR:$APIPORT/requests/status.xml" | grep volume)
-		[ $? != "0" ] && echo "Error: action failed! unable to read volume (check if password is correct)" && exit 1
-		echo "$RES"	
+		[ $? != "0" ] && echo "Error: action failed! unable to read volume for ip $IPADDR (check if password is correct)" && exit 1
+		echo "$RES : $IPADDR"	
 	else
 		RES=$(curl -s -G -H "Authorization: Basic $PASSWD" "http://$IPADDR:$APIPORT/requests/status.xml" --data-urlencode "command=volume" --data-urlencode "val=$VALUE")
-		[ $? != "0" ] && echo "Error: action failed! unable set volume (check if password/volume-value is correct)" && exit 1
+		[ $? != "0" ] && echo "Error: action failed! unable set volume for ip $IPADDR (check if password/volume-value is correct)" && exit 1
 	fi
 elif [ $ACTION = "stop" ]; then
 	RES=$(curl -s -G -H "Authorization: Basic $PASSWD" "http://$IPADDR:$APIPORT/requests/status.xml?command=pl_stop")
-	[ $? != "0" ] && echo "Error: action failed! unable to stop player (check if password is correct)" && exit 1
+	[ $? != "0" ] && echo "Error: action failed! unable to stop player for ip $IPADDR (check if password is correct)" && exit 1
 else
-	echo "Error: invalid action argument ==> $ACTION"
+	echo "Error: invalid action argument ==> $ACTION for ip $IPADDR"
 	echo $USAGE
 	exit 1
 fi
 
+exit 0

@@ -1,6 +1,6 @@
 #!/bin/sh
 #./setup.sh -n 1 
-USAGE="usage:$0 -n <pi_sequence_number> (1 is for master-master, remaining numbers are for slave-raspi)"
+USAGE="usage:$0 -n <pi_sequence_number> (1 is for master-raspi, remaining numbers are for slave-raspi)"
 SLAVE_NUM="none"
 
 while getopts n: f
