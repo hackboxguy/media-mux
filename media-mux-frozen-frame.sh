@@ -22,6 +22,6 @@ if [ "$VAL1" = "$VAL2" ]; then
 	echo "$IP:Error: Frozen-Frame!!!" #decodevideo count doesnt increase when vlc media-playback has frozen frame.
 	exit 1
 else
-	echo "$IP:OK: No frozen-Frame"
+	echo "$IP:Ok   : No Frozen-Frame"
 	exit 0
 fi
