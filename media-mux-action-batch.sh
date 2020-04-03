@@ -6,7 +6,7 @@ ACTION="status"
 VALUE="none"
 APIPORT=8080
 FINAL_RES=0
-EXEC_SCRIPT=/home/pi/media-mux/media-mux-play.sh
+EXEC_SCRIPT=/home/pi/media-mux/media-mux-action.sh
 
 while getopts p:a:v: f
 do
