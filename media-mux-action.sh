@@ -28,35 +28,35 @@ if [ $PASSWD = "none" ]; then
 	echo $USAGE
 	exit 1
 fi
-
+IP=$(printf "%-15s" $IPADDR)
 if [ $ACTION = "status" ]; then
 	RES=$(curl -s -G -H "Authorization: Basic $PASSWD" "http://$IPADDR:$APIPORT/requests/status.xml" | grep state)
-	[ $? != "0" ] && echo "Error: action failed! unable to read player status for ip $IPADDR (check if password is correct)" && exit 1
+	[ $? != "0" ] && echo "$IP:Error: action failed! unable to read player status (check if password is correct)" && exit 1
 	if [ $RES = "<state>stopped</state>" ]; then
-		echo "Player-state: Stopped : $IPADDR"	
+		echo "$IP:Player-state: Stopped"	
 		elif [ $RES = "<state>stopped</state><information>" ]; then
-		echo "Player-state: Stopped : $IPADDR"	
+		echo "$IP:Player-state: Stopped"	
         elif [ $RES = "<state>playing</state>" ]; then
-		echo "Player-state: Playing : $IPADDR"	
+		echo "$IP:Player-state: Playing"	
 		elif [ $RES = "<state>playing</state><information>" ]; then
-		echo "Player-state: Playing : $IPADDR"	
+		echo "$IP:Player-state: Playing"	
 	else
-		echo "Player-state: $RES : $IPADDR"	
+		echo "$IP:Player-state: $RES"
 	fi
 elif [ $ACTION = "volume" ]; then
 	if [ $VALUE = "none" ]; then
 		RES=$(curl -s -G -H "Authorization: Basic $PASSWD" "http://$IPADDR:$APIPORT/requests/status.xml" | grep volume)
-		[ $? != "0" ] && echo "Error: action failed! unable to read volume for ip $IPADDR (check if password is correct)" && exit 1
-		echo "$RES : $IPADDR"	
+		[ $? != "0" ] && echo "$IP:Error: action failed! unable to read volume (check if password is correct)" && exit 1
+		echo "$IP:$RES"	
 	else
 		RES=$(curl -s -G -H "Authorization: Basic $PASSWD" "http://$IPADDR:$APIPORT/requests/status.xml" --data-urlencode "command=volume" --data-urlencode "val=$VALUE")
-		[ $? != "0" ] && echo "Error: action failed! unable set volume for ip $IPADDR (check if password/volume-value is correct)" && exit 1
+		[ $? != "0" ] && echo "$IP:Error: action failed! unable set volume (check if password/volume-value is correct)" && exit 1
 	fi
 elif [ $ACTION = "stop" ]; then
 	RES=$(curl -s -G -H "Authorization: Basic $PASSWD" "http://$IPADDR:$APIPORT/requests/status.xml?command=pl_stop")
-	[ $? != "0" ] && echo "Error: action failed! unable to stop player for ip $IPADDR (check if password is correct)" && exit 1
+	[ $? != "0" ] && echo "$IP:Error: action failed! unable to stop player (check if password is correct)" && exit 1
 else
-	echo "Error: invalid action argument ==> $ACTION for ip $IPADDR"
+	echo "$IP:Error: invalid action argument ==> $ACTION"
 	echo $USAGE
 	exit 1
 fi

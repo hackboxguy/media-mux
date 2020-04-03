@@ -33,8 +33,8 @@ if [ $URL = "none" ]; then
         echo $USAGE
         exit 1
 fi
-
+IP=$(printf "%-15s" $IPADDR)
 RES=$(curl -s -G -H "Authorization: Basic $PASSWD" "http://$IPADDR:$APIPORT/requests/status.xml?command=in_play&input=$URL")
-[ $? != "0" ] && echo "Error: action failed! unable play url for ip=$IPADDR (check if password/url is correct)" && exit 1
+[ $? != "0" ] && echo "$IP:Error: action failed! unable play url (check if password/url is correct)" && exit 1
 
 exit 0

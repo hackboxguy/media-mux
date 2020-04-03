@@ -5,6 +5,7 @@ PASSWD="OmJyYjB4" #default-pw: brb0x
 URL="none"
 APIPORT=8080
 FINAL_RES=0
+EXEC_SCRIPT=/home/pi/media-mux/media-mux-play.sh
 
 while getopts p:u: f
 do
@@ -29,10 +30,8 @@ DEVICES=$(avahi-browse -arc 2>/dev/null | grep -A2 "IPv4 media-mux" | grep addre
 
 for i in $DEVICES
 do
-	./media-mux-play.sh -i $i -p $PASSWD -u $URL
+	$EXEC_SCRIPT -i $i -p $PASSWD -u $URL
 	[ $? != "0" ] && FINAL_RES=1
-	#RES=$(curl -s -G -H "Authorization: Basic $PASSWD" "http://$i:$APIPORT/requests/status.xml?command=in_play&input=$URL")
-	#[ $? != "0" ] && echo "Error: action failed! unable play url at ip $i (check if password/url is correct)" && FINAL_RES=1
 done
 
 exit $FINAL_RES
