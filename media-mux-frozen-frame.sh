@@ -16,8 +16,11 @@ done
 
 IP=$(printf "%-15s" $IPADDR)
 VAL1=$($EXEC_SCRIPT -i $IPADDR -p $PASSWD -a custom -v decodedvideo)
+[ $? != "0" ] && echo "$IP:Error: action failed! unable to read player status (check if password is correct)" && exit 1
 sleep 0.5
 VAL2=$($EXEC_SCRIPT -i $IPADDR -p $PASSWD -a custom -v decodedvideo)
+[ $? != "0" ] && echo "$IP:Error: action failed! unable to read player status (check if password is correct)" && exit 1
+
 if [ "$VAL1" = "$VAL2" ]; then
 	echo "$IP:Error: Frozen-Frame!!!" #decodevideo count doesnt increase when vlc media-playback has frozen frame.
 	exit 1
