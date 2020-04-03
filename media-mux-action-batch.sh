@@ -1,11 +1,12 @@
 #!/bin/sh
 #./media-mux-action-batch.sh -p passwd -a [status/stop/volume]
-USAGE="usage:$0 -p <passwd> -a <stop/status/volume> -v <volume_value>"
+USAGE="usage:$0 -p <passwd> -a <stop/status/volume> -v <value>"
 PASSWD="OmJyYjB4" #default-pw: brb0x
 ACTION="status"
 VALUE="none"
 APIPORT=8080
 FINAL_RES=0
+EXEC_SCRIPT=/home/pi/media-mux/media-mux-play.sh
 
 while getopts p:a:v: f
 do
@@ -30,7 +31,7 @@ fi
 DEVICES=$(avahi-browse -arc 2>/dev/null | grep -A2 "IPv4 media-mux" | grep address | sort -u |sed 's/   address = \[//'|sed 's/\]//')
 for i in $DEVICES
 do
-	./media-mux-action.sh -i $i -p $PASSWD -a $ACTION -v $VALUE
+	$EXEC_SCRIPT -i $i -p $PASSWD -a $ACTION -v $VALUE
 	[ $? != "0" ] && FINAL_RES=1
 done
 

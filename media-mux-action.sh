@@ -1,6 +1,6 @@
 #!/bin/sh
 #./media-mux-action.sh -i 192.168.8.5 -p passwd -a [status/stop]
-USAGE="usage:$0 -i <ipaddr/hostname> -p <passwd> -a <stop/status/volume> -v <volume_value>"
+USAGE="usage:$0 -i <ipaddr/hostname> -p <passwd> -a <stop/status/volume> -v <value>"
 IPADDR="127.0.0.1"
 PASSWD="OmJyYjB4" #default-pw: brb0x
 ACTION="status"
@@ -51,6 +51,16 @@ elif [ $ACTION = "volume" ]; then
 	else
 		RES=$(curl -s -G -H "Authorization: Basic $PASSWD" "http://$IPADDR:$APIPORT/requests/status.xml" --data-urlencode "command=volume" --data-urlencode "val=$VALUE")
 		[ $? != "0" ] && echo "$IP:Error: action failed! unable set volume (check if password/volume-value is correct)" && exit 1
+	fi
+elif [ $ACTION = "custom" ]; then
+	if [ $VALUE = "none" ]; then
+		echo "$IP:Error: custom action needs value argument"
+		echo $USAGE
+		exit 1
+	else
+		RES=$(curl -s -G -H "Authorization: Basic $PASSWD" "http://$IPADDR:$APIPORT/requests/status.xml" | grep $VALUE)
+		[ $? != "0" ] && echo "$IP:Error: action failed! unable to read custom value (check if password is correct)" && exit 1
+		echo "$IP:$RES"	
 	fi
 elif [ $ACTION = "stop" ]; then
 	RES=$(curl -s -G -H "Authorization: Basic $PASSWD" "http://$IPADDR:$APIPORT/requests/status.xml?command=pl_stop")
