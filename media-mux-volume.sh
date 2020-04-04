@@ -25,12 +25,12 @@ fi
 IP=$(printf "%-15s" $IPADDR)
 VAL1=$($EXEC_SCRIPT -i $IPADDR -p $PASSWD -a volume)
 [ $? != "0" ] && echo "$IP:Error: action failed! unable to read current volume setting(check if password is correct)" && exit 1
-NEW_VOLUME=$(echo $VAL1 | awk '{print $2}' | sed 's/:<volume>//'| sed 's/<\/volume>//')
+NEW_VOLUME=$(echo $VAL1 | awk '{print $2}' | sed 's/:<volume>//'| sed 's/<\/volume>//' | sed 's/<information>//')
 
 if [ $ACTION = "u" ]; then
-	NEW_VOLUME=$(( NEW_VOLUME + 50 ))
+	NEW_VOLUME=$(( NEW_VOLUME + 20 ))
 else
-	NEW_VOLUME=$(( NEW_VOLUME - 50 ))
+	NEW_VOLUME=$(( NEW_VOLUME - 20 ))
 fi
 
 VAL2=$($EXEC_SCRIPT -i $IPADDR -p $PASSWD -a volume -v $NEW_VOLUME)

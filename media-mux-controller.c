@@ -1,4 +1,4 @@
-//example take from : https://raspberry-projects.com/pi/programming-in-c/keyboard-programming-in-c/reading-raw-keyboard-input
+//original example taken from : https://raspberry-projects.com/pi/programming-in-c/keyboard-programming-in-c/reading-raw-keyboard-input
 #include <linux/input.h>
 #include <linux/input-event-codes.h>
 #include <fcntl.h>  //for open()
