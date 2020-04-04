@@ -27,7 +27,7 @@ if [ $URL = "none" ]; then
 fi
 
 #DEVICES=$(avahi-browse -ac | grep "IPv4 media-mux-" | awk '{print $4}')
-DEVICES=$(avahi-browse -arc 2>/dev/null | grep -A2 "IPv4 media-mux" | grep address | sort -u |sed 's/   address = \[//'|sed 's/\]//')
+DEVICES=$(avahi-browse -art 2>/dev/null | grep -A2 "IPv4 media-mux" | grep address | sort -u |sed 's/   address = \[//'|sed 's/\]//')
 
 for i in $DEVICES
 do

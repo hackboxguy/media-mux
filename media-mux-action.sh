@@ -1,6 +1,6 @@
 #!/bin/sh
 #./media-mux-action.sh -i 192.168.8.5 -p passwd -a [status/stop]
-USAGE="usage:$0 -i <ipaddr/hostname> -p <passwd> -a <stop/status/volume> -v <value>"
+USAGE="usage:$0 -i <ipaddr/hostname> -p <passwd> -a <stop/status/volume/custom> -v <value>"
 IPADDR="127.0.0.1"
 PASSWD="OmJyYjB4" #default-pw: brb0x
 ACTION="status"

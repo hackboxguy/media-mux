@@ -72,6 +72,9 @@ printf "Forcing audio output to analog-out ..................... "
 amixer cset numid=3 1 > /dev/null #0-automatic 1-analog 2-hdmi
 test 0 -eq $? && echo "[OK]" || echo "[FAIL]"
 
+printf "Compiling media-mux-controller-server................... "
+gcc media-mux-controller.c -o media-mux-controller 1>/dev/null 2>/dev/null
+test 0 -eq $? && echo "[OK]" || echo "[FAIL]"
 
 #for master, enable dhcp server
 #if [ $NUM = "0001" ]; then
