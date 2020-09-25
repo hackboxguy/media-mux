@@ -18,4 +18,5 @@ if [ "$_IP" ]; then
 fi
 su -l pi -c "/home/pi/media-mux/avahi-publish-media-mux.sh" &
 su -l pi -c "/home/pi/media-mux/media-mux-autoplay.sh" & 
+su -l pi -c "/home/pi/media-mux/media-client/media-client" &
 exit 0
