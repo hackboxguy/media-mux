@@ -31,6 +31,7 @@ DEVICES=$(avahi-browse -art 2>/dev/null | grep -A2 "IPv4 media-mux" | grep addre
 
 for i in $DEVICES
 do
+	[ $i = "127.0.0.1" ] && continue
 	$EXEC_SCRIPT -i $i -p $PASSWD -u $URL
 	[ $? != "0" ] && FINAL_RES=1
 done

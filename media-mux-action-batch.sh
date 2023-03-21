@@ -34,6 +34,7 @@ fi
 DEVICES=$(avahi-browse -art 2>/dev/null | grep -A2 "IPv4 media-mux" | grep address | sort -u |sed 's/   address = \[//'|sed 's/\]//')
 for i in $DEVICES
 do
+	[ $i = "127.0.0.1" ] && continue
 	if [ $ACTION = "frozenframe" ]; then
 		$EXEC_SCRIPT_FF -i $i -p $PASSWD
 	elif [ $ACTION = "volumeup" ]; then
