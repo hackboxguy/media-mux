@@ -3,7 +3,7 @@
 USAGE="usage:$0 -p <passwd> -i <ip>"
 PASSWD="OmJyYjB4" #default-pw: brb0x
 IPADDR="127.0.0.1"
-EXEC_SCRIPT=/home/pi/media-mux/media-mux-action.sh
+EXEC_SCRIPT=media-mux-action.sh
 
 while getopts p:i:h f
 do
@@ -13,11 +13,12 @@ do
 	h) echo $USAGE;exit 1 ;;
 	esac
 done
+[ ! -f "/usr/bin/$EXEC_SCRIPT" ] && EXEC_SCRIPT=/home/pi/media-mux/$EXEC_SCRIPT
 
 IP=$(printf "%-15s" $IPADDR)
 VAL1=$($EXEC_SCRIPT -i $IPADDR -p $PASSWD -a custom -v decodedvideo)
 [ $? != "0" ] && echo "$IP:Error: action failed! unable to read player status (check if password is correct)" && exit 1
-sleep 0.5
+sleep 1
 VAL2=$($EXEC_SCRIPT -i $IPADDR -p $PASSWD -a custom -v decodedvideo)
 [ $? != "0" ] && echo "$IP:Error: action failed! unable to read player status (check if password is correct)" && exit 1
 

@@ -5,7 +5,7 @@ PASSWD="OmJyYjB4" #default-pw: brb0x
 URL="none"
 APIPORT=8080
 FINAL_RES=0
-EXEC_SCRIPT=/home/pi/media-mux/media-mux-play.sh
+EXEC_SCRIPT=media-mux-play.sh
 
 while getopts p:u: f
 do
@@ -25,8 +25,8 @@ if [ $URL = "none" ]; then
         echo $USAGE
         exit 1
 fi
+[ ! -f "/usr/bin/$EXEC_SCRIPT" ] && EXEC_SCRIPT=/home/pi/media-mux/$EXEC_SCRIPT
 
-#DEVICES=$(avahi-browse -ac | grep "IPv4 media-mux-" | awk '{print $4}')
 DEVICES=$(avahi-browse -art 2>/dev/null | grep -A2 "IPv4 media-mux" | grep address | sort -u |sed 's/   address = \[//'|sed 's/\]//')
 
 for i in $DEVICES

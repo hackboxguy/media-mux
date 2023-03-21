@@ -6,9 +6,9 @@ ACTION="status"
 VALUE="none"
 APIPORT=8080
 FINAL_RES=0
-EXEC_SCRIPT=/home/pi/media-mux/media-mux-action.sh
-EXEC_SCRIPT_FF=/home/pi/media-mux/media-mux-frozen-frame.sh
-EXEC_SCRIPT_VOL=/home/pi/media-mux/media-mux-volume.sh
+EXEC_SCRIPT=media-mux-action.sh
+EXEC_SCRIPT_FF=media-mux-frozen-frame.sh
+EXEC_SCRIPT_VOL=media-mux-volume.sh
 
 while getopts p:a:v: f
 do
@@ -30,7 +30,10 @@ if [ $PASSWD = "none" ]; then
 	exit 1
 fi
 
-#DEVICES=$(avahi-browse -ac | grep "IPv4 media-mux-" | awk '{print $4}')
+[ ! -f "/usr/bin/$EXEC_SCRIPT" ] && EXEC_SCRIPT=/home/pi/media-mux/$EXEC_SCRIPT
+[ ! -f "/usr/bin/$EXEC_SCRIPT_FF" ] && EXEC_SCRIPT_FF=/home/pi/media-mux/$EXEC_SCRIPT_FF
+[ ! -f "/usr/bin/$EXEC_SCRIPT_VOL" ] && EXEC_SCRIPT_VOL=/home/pi/media-mux/$EXEC_SCRIPT_VOL
+
 DEVICES=$(avahi-browse -art 2>/dev/null | grep -A2 "IPv4 media-mux" | grep address | sort -u |sed 's/   address = \[//'|sed 's/\]//')
 for i in $DEVICES
 do

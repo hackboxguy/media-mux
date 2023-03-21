@@ -3,7 +3,7 @@
 USAGE="usage:$0 -p <passwd> -i <ip> -a <u/d>"
 PASSWD="OmJyYjB4" #default-pw: brb0x
 IPADDR="127.0.0.1"
-EXEC_SCRIPT=/home/pi/media-mux/media-mux-action.sh
+EXEC_SCRIPT=media-mux-action.sh
 ACTION="none"
 
 while getopts p:i:a:h f
@@ -21,6 +21,7 @@ if [ $ACTION = "none" ]; then
 	echo $USAGE
 	exit 1
 fi
+[ ! -f "/usr/bin/$EXEC_SCRIPT" ] && EXEC_SCRIPT=/home/pi/media-mux/$EXEC_SCRIPT
 
 IP=$(printf "%-15s" $IPADDR)
 VAL1=$($EXEC_SCRIPT -i $IPADDR -p $PASSWD -a volume)
