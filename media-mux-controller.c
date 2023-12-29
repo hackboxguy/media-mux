@@ -9,11 +9,12 @@
 
 #define BITS_PER_LONG (sizeof(long) * 8)
 #define NBITS(x) ((((x)-1)/BITS_PER_LONG)+1)
-#define INPUT_DEVICE "/dev/input/by-id/usb-05a4_9881-event-kbd"
-//#define INPUT_DEVICE "/dev/input/event0"
+//#define INPUT_DEVICE "/dev/input/by-id/usb-05a4_9881-event-kbd"
+#define INPUT_DEVICE "/dev/input/event0"
 
 int main (void)
 {
+	int Playing=1;
 	int FileDevice;
 	int ReadDevice;
 	int Index;
@@ -88,9 +89,9 @@ int main (void)
 							case KEY_LEFT     :break;
 							case KEY_ENTER    :break;
 							case KEY_KP0      :break;
-							case KEY_KP1      :system("/home/pi/media-mux/media-mux-play-batch.sh -u udp://@239.255.42.61:5004");break;
-							case KEY_KP2      :system("/home/pi/media-mux/media-mux-play-batch.sh -u udp://@239.255.42.62:5004");break;
-							case KEY_KP3      :system("/home/pi/media-mux/media-mux-play-batch.sh -u udp://@239.255.42.64:5004");break;
+							case KEY_KP1      :break;//system("/home/pi/media-mux/media-mux-play-batch.sh -u udp://@239.255.42.61:5004");break;
+							case KEY_KP2      :break;//system("/home/pi/media-mux/media-mux-play-batch.sh -u udp://@239.255.42.62:5004");break;
+							case KEY_KP3      :break;//system("/home/pi/media-mux/media-mux-play-batch.sh -u udp://@239.255.42.64:5004");break;
 							case KEY_KP4      :break;
 							case KEY_KP5      :break;
 							case KEY_KP6      :break;
@@ -98,9 +99,22 @@ int main (void)
 							case KEY_KP8      :break;
 							case KEY_KP9      :break;
 							case KEY_BACKSPACE:break;
-							case KEY_PAGEUP   :system("/home/pi/media-mux/media-mux-action-batch.sh -a volumeup");break; //channel + (hama-mce-remote)
-							case KEY_PAGEDOWN :system("/home/pi/media-mux/media-mux-action-batch.sh -a volumedn");break; //channel - (hama-mce-remote)
-							case KEY_ESC      :system("/home/pi/media-mux/media-mux-action-batch.sh -a stop");break;//key clear on hama-mce-remote
+							case KEY_PAGEUP   :break;//system("/home/pi/media-mux/media-mux-action-batch.sh -a volumeup");break; //channel + (hama-mce-remote)
+							case KEY_PAGEDOWN :break;//system("/home/pi/media-mux/media-mux-action-batch.sh -a volumedn");break; //channel - (hama-mce-remote)
+							case KEY_ESC      :break;//system("/home/pi/media-mux/media-mux-action-batch.sh -a stop");break;//key clear on hama-mce-remote
+							case KEY_1        :if(Playing==0)
+								           {
+										system("/home/pi/media-mux/media-mux-play-batch.sh -u udp://@239.255.42.65:5004");
+										Playing=1;
+									   }
+									   else
+								           {
+										system("/home/pi/media-mux/media-mux-action-batch.sh -a stop");
+										Playing=0;
+									   }
+									   break;
+							case KEY_2        :system("/home/pi/media-mux/media-mux-action-batch.sh -a volumedn");break;
+							case KEY_3        :system("/home/pi/media-mux/media-mux-action-batch.sh -a volumeup");break;
 							default           :break; //unknown key
 						}
 					}
@@ -109,6 +123,5 @@ int main (void)
 		}
 
 	}
-
     return 0;
 }
