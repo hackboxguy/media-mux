@@ -62,25 +62,29 @@ cp rc.local /etc/
 test 0 -eq $? && echo "[OK]" || echo "[FAIL]"
 
 
-printf "Enabling ssh server .................................... "
-systemctl enable ssh 1>/dev/null 2>/dev/null
-systemctl start ssh 1>/dev/null 2>/dev/null
-test 0 -eq $? && echo "[OK]" || echo "[FAIL]"
+#printf "Enabling ssh server .................................... "
+#systemctl enable ssh 1>/dev/null 2>/dev/null
+#systemctl start ssh 1>/dev/null 2>/dev/null
+#test 0 -eq $? && echo "[OK]" || echo "[FAIL]"
 
 
-printf "Forcing audio output to analog-out ..................... "
-amixer cset numid=3 1 > /dev/null #0-automatic 1-analog 2-hdmi
-test 0 -eq $? && echo "[OK]" || echo "[FAIL]"
+#printf "Forcing audio output to analog-out ..................... "
+#amixer cset numid=3 1 > /dev/null #0-automatic 1-analog 2-hdmi
+#test 0 -eq $? && echo "[OK]" || echo "[FAIL]"
 
 printf "Compiling media-mux-controller-server................... "
 gcc media-mux-controller.c -o media-mux-controller 1>/dev/null 2>/dev/null
 test 0 -eq $? && echo "[OK]" || echo "[FAIL]"
 
-#for master, enable dhcp server
-#if [ $NUM = "0001" ]; then
-#	sudo apt-get -y install isc-dhcp-server
-#	cp dhcpd.conf /etc/dhcp/
-#fi
+#for master, enable dhcp server and mediamtx service
+if [ $NUM = "0001" ]; then
+	#	sudo apt-get -y install isc-dhcp-server
+	#	cp dhcpd.conf /etc/dhcp/
+	printf "Enabling mediamtx service............................... "
+	#systemctl enable /home/pi/media-mux/mediamtx.service 1>/dev/null 2>/dev/null
+	#systemctl start mediamtx.service 1>/dev/null 2>/dev/null
+	test 0 -eq $? && echo "[OK]" || echo "[FAIL]"
+fi
 
 sync
 

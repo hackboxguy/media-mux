@@ -1,0 +1,12 @@
+[Unit]
+Description=mediamtx rtsp server
+After=network.target
+
+[Service]
+User=pi
+ExecStart=/home/pi/media-mux/mediamtx /home/pi/media-mux/mediamtx.yml
+WorkingDirectory=/home/pi/media-mux
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

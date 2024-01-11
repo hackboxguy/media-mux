@@ -1,0 +1,6 @@
+paths:
+  all:
+    source: publisher
+  source-1:
+    runOnInit: ffmpeg -re -stream_loop -1 -i /home/pi/media-mux/frame-counter.mp4 -c copy -f rtsp -rtsp_transport tcp rtsp://localhost:8554/test-stream-1
+    runOnInitRestart: yes
