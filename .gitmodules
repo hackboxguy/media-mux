@@ -1,0 +1,3 @@
+[submodule "kodisync"]
+	path = kodisync
+	url = https://github.com/hackboxguy/kodisync.git

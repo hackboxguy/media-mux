@@ -40,7 +40,7 @@ test 0 -eq $? && echo "[OK]" || echo "[FAIL]"
 
 #install dependencies
 printf "Installing dependencies ................................ "
-DEBIAN_FRONTEND=noninteractive apt-get install -qq avahi-daemon avahi-discover libnss-mdns avahi-utils kodi < /dev/null > /dev/null
+DEBIAN_FRONTEND=noninteractive apt-get install -qq avahi-daemon avahi-discover libnss-mdns avahi-utils kodi jq nodejs npm < /dev/null > /dev/null
 test 0 -eq $? && echo "[OK]" || echo "[FAIL]"
 
 
@@ -92,12 +92,13 @@ runuser -l pi -c 'mkdir -p /home/pi/.kodi/userdata'
 runuser -l pi -c 'cp /home/pi/media-mux/sources.xml /home/pi/.kodi/userdata/'
 runuser -l pi -c 'cp /home/pi/media-mux/guisettings.xml /home/pi/.kodi/userdata/'
 runuser -l pi -c 'cp /home/pi/media-mux/wf-panel-pi.ini /home/pi/.config/'
-cp mediamuxstart.png /usr/share/pixmaps/
-cp mediamuxstop.png /usr/share/pixmaps/
-cp mediamuxstart.png /usr/share/icons/hicolor/48x48/apps/
-cp mediamuxstop.png /usr/share/icons/hicolor/48x48/apps/
-cp mediamuxstart.desktop /usr/share/applications/
-cp mediamuxstop.desktop /usr/share/applications/
+runuser -l pi -c 'cd /home/pi/media-mux/kodisync;npm install'
+#cp mediamuxstart.png /usr/share/pixmaps/
+#cp mediamuxstop.png /usr/share/pixmaps/
+#cp mediamuxstart.png /usr/share/icons/hicolor/48x48/apps/
+#cp mediamuxstop.png /usr/share/icons/hicolor/48x48/apps/
+#cp mediamuxstart.desktop /usr/share/applications/
+#cp mediamuxstop.desktop /usr/share/applications/
 test 0 -eq $? && echo "[OK]" || echo "[FAIL]"
 
 sync

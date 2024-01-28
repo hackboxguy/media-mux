@@ -40,6 +40,10 @@ int main (void)
 	}
 	//printf("Input driver version is %d.%d.%d\n", version >> 16, (version >> 8) & 0xff, version & 0xff);
 
+    //take exclusive access of this input-device, dont let these key press events are sent to other programs.
+    if(ioctl( FileDevice, EVIOCGRAB, 1 ) < 0)
+        return -1;//"unable to get exclusive access to input device" << CFLOG_ENDL;
+
 	//----- GET DEVICE INFO -----
 	ioctl(FileDevice, EVIOCGID, id);
 	//printf("Input device ID: bus 0x%x vendor 0x%x product 0x%x version 0x%x\n", id[ID_BUS], id[ID_VENDOR], id[ID_PRODUCT], id[ID_VERSION]);
@@ -102,19 +106,21 @@ int main (void)
 							case KEY_PAGEUP   :break;//system("/home/pi/media-mux/media-mux-action-batch.sh -a volumeup");break; //channel + (hama-mce-remote)
 							case KEY_PAGEDOWN :break;//system("/home/pi/media-mux/media-mux-action-batch.sh -a volumedn");break; //channel - (hama-mce-remote)
 							case KEY_ESC      :break;//system("/home/pi/media-mux/media-mux-action-batch.sh -a stop");break;//key clear on hama-mce-remote
-							case KEY_1        :if(Playing==0)
-								           {
-										system("/home/pi/media-mux/media-mux-play-batch.sh -u udp://@239.255.42.65:5004");
-										Playing=1;
-									   }
-									   else
-								           {
-										system("/home/pi/media-mux/media-mux-action-batch.sh -a stop");
-										Playing=0;
-									   }
+							case KEY_1        :
+										system("/home/pi/media-mux/media-mux-sync-kodi-players.sh");
+										//if(Playing==0)
+								           //{
+										//system("/home/pi/media-mux/media-mux-play-batch.sh -u udp://@239.255.42.65:5004");
+										//Playing=1;
+									   //}
+									   //else
+								       //    {
+										//system("/home/pi/media-mux/media-mux-action-batch.sh -a stop");
+										//Playing=0;
+									   //}
 									   break;
-							case KEY_2        :system("/home/pi/media-mux/media-mux-action-batch.sh -a volumedn");break;
-							case KEY_3        :system("/home/pi/media-mux/media-mux-action-batch.sh -a volumeup");break;
+							case KEY_2        :break;//system("/home/pi/media-mux/media-mux-action-batch.sh -a volumedn");break;
+							case KEY_3        :break;//system("/home/pi/media-mux/media-mux-action-batch.sh -a volumeup");break;
 							default           :break; //unknown key
 						}
 					}
