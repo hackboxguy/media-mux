@@ -59,7 +59,11 @@ test 0 -eq $? && echo "[OK]" || echo "[FAIL]"
 
 #setup auto startup script
 printf "Customizing rc.local ................................... "
-cp rc.local /etc/
+if [ $NUM = "0001" ]; then
+	cp rc.local.master /etc/rc.local
+else
+	cp rc.local /etc/
+fi
 test 0 -eq $? && echo "[OK]" || echo "[FAIL]"
 
 
