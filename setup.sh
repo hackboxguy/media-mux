@@ -40,6 +40,7 @@ test 0 -eq $? && echo "[OK]" || echo "[FAIL]"
 
 #install dependencies
 printf "Installing dependencies ................................ "
+DEBIAN_FRONTEND=noninteractive apt-get update < /dev/null > /dev/null
 DEBIAN_FRONTEND=noninteractive apt-get install -qq avahi-daemon avahi-discover libnss-mdns avahi-utils kodi jq nodejs npm < /dev/null > /dev/null
 test 0 -eq $? && echo "[OK]" || echo "[FAIL]"
 
@@ -92,7 +93,7 @@ runuser -l pi -c 'mkdir -p /home/pi/.kodi/userdata'
 runuser -l pi -c 'cp /home/pi/media-mux/sources.xml /home/pi/.kodi/userdata/'
 runuser -l pi -c 'cp /home/pi/media-mux/guisettings.xml /home/pi/.kodi/userdata/'
 runuser -l pi -c 'cp /home/pi/media-mux/wf-panel-pi.ini /home/pi/.config/'
-runuser -l pi -c 'cd /home/pi/media-mux/kodisync;npm install'
+runuser -l pi -c 'cd /home/pi/media-mux/kodisync;npm --silent install'
 #cp mediamuxstart.png /usr/share/pixmaps/
 #cp mediamuxstop.png /usr/share/pixmaps/
 #cp mediamuxstart.png /usr/share/icons/hicolor/48x48/apps/
