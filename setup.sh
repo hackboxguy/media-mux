@@ -108,4 +108,5 @@ test 0 -eq $? && echo "[OK]" || echo "[FAIL]"
 
 sync
 
-echo   "Setup completed successfully! Reboot the board ......... "
+echo   "Setup completed successfully! Rebooting the system......."
+reboot
