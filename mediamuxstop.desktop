@@ -1,0 +1,11 @@
+[Desktop Entry]
+Version=1.0
+Name=Mediamux Stop
+GenericName=Mediamux Stop
+Comment=Stop Mediamux Player
+Exec=/home/pi/media-mux/media-mux-stop.sh
+Icon=mediamuxstop
+Terminal=false
+Type=Application
+Categories=AudioVideo;Video;Player;TV;
+

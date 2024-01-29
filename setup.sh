@@ -40,7 +40,7 @@ test 0 -eq $? && echo "[OK]" || echo "[FAIL]"
 
 #install dependencies
 printf "Installing dependencies ................................ "
-DEBIAN_FRONTEND=noninteractive apt-get install -qq avahi-daemon avahi-discover libnss-mdns avahi-utils < /dev/null > /dev/null
+DEBIAN_FRONTEND=noninteractive apt-get install -qq avahi-daemon avahi-discover libnss-mdns avahi-utils kodi < /dev/null > /dev/null
 test 0 -eq $? && echo "[OK]" || echo "[FAIL]"
 
 
@@ -85,6 +85,20 @@ if [ $NUM = "0001" ]; then
 	#systemctl start mediamtx.service 1>/dev/null 2>/dev/null
 	test 0 -eq $? && echo "[OK]" || echo "[FAIL]"
 fi
+
+#useful for raspi-4 with touchscreen based display
+printf "Preparing Kodi-config and desktop shortcuts............. "
+mkdir -p /home/pi/.kodi/userdata
+cp sources.xml /home/pi/.kodi/userdata/
+cp guisettings.xml /home/pi/.kodi/userdata/
+cp mediamuxstart.png /usr/share/pixmaps/
+cp mediamuxstop.png /usr/share/pixmaps/
+cp mediamuxstart.png /usr/share/icons/hicolor/48x48/apps/
+cp mediamuxstop.png /usr/share/icons/hicolor/48x48/apps/
+cp mediamuxstart.desktop /usr/share/applications/
+cp mediamuxstop.desktop /usr/share/applications/
+cp wf-panel-pi.ini /home/pi/.config/
+test 0 -eq $? && echo "[OK]" || echo "[FAIL]"
 
 sync
 
