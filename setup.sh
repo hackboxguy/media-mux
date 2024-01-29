@@ -89,9 +89,9 @@ fi
 #useful for raspi-4 with touchscreen based display
 printf "Preparing Kodi-config and desktop shortcuts............. "
 runuser -l pi -c 'mkdir -p /home/pi/.kodi/userdata'
-runuser -l pi -c 'cp sources.xml /home/pi/.kodi/userdata/'
-runuser -l pi -c 'cp guisettings.xml /home/pi/.kodi/userdata/'
-runuser -l pi -c 'cp wf-panel-pi.ini /home/pi/.config/'
+runuser -l pi -c 'cp /home/pi/media-mux/sources.xml /home/pi/.kodi/userdata/'
+runuser -l pi -c 'cp /home/pi/media-mux/guisettings.xml /home/pi/.kodi/userdata/'
+runuser -l pi -c 'cp /home/pi/media-mux/wf-panel-pi.ini /home/pi/.config/'
 cp mediamuxstart.png /usr/share/pixmaps/
 cp mediamuxstop.png /usr/share/pixmaps/
 cp mediamuxstart.png /usr/share/icons/hicolor/48x48/apps/
