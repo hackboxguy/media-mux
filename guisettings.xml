@@ -257,9 +257,9 @@
     <setting id="services.devicename" default="true">Kodi</setting>
     <setting id="services.zeroconf" default="true">true</setting>
     <setting id="services.deviceuuid">032b473d-80c8-477a-849c-037b0c48f740</setting>
-    <setting id="services.webserver" default="true">false</setting>
-    <setting id="services.webserverport" default="true">8080</setting>
-    <setting id="services.webserverauthentication" default="true">true</setting>
+    <setting id="services.webserver">true</setting>
+    <setting id="services.webserverport">8888</setting>
+    <setting id="services.webserverauthentication">false</setting>
     <setting id="services.webserverusername" default="true">kodi</setting>
     <setting id="services.webserverpassword" default="true" />
     <setting id="services.webserverssl" default="true">false</setting>
@@ -268,7 +268,7 @@
     <setting id="services.esport" default="true">9777</setting>
     <setting id="services.esportrange" default="true">10</setting>
     <setting id="services.esmaxclients" default="true">20</setting>
-    <setting id="services.esallinterfaces" default="true">false</setting>
+    <setting id="services.esallinterfaces">true</setting>
     <setting id="services.esinitialdelay" default="true">750</setting>
     <setting id="services.escontinuousdelay" default="true">25</setting>
     <setting id="services.upnp">true</setting>
@@ -363,7 +363,7 @@
     <setting id="powermanagement.wakeonaccess" default="true">false</setting>
     <setting id="general.addonupdates" default="true">0</setting>
     <setting id="general.addonnotifications" default="true">false</setting>
-    <setting id="addons.unknownsources" default="true">false</setting>
+    <setting id="addons.unknownsources">true</setting>
     <setting id="addons.updatemode" default="true">0</setting>
     <setting id="debug.showloginfo" default="true">false</setting>
     <setting id="debug.extralogging" default="true">false</setting>
