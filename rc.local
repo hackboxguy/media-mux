@@ -17,9 +17,9 @@ if [ "$_IP" ]; then
   printf "My IP address is %s\n" "$_IP"
 fi
 su -l pi -c "/home/pi/media-mux/avahi-publish-media-mux.sh" &
-su -l pi -c "/home/pi/media-mux/media-mux-autoplay.sh" & 
+#su -l pi -c "/home/pi/media-mux/media-mux-autoplay.sh" &
 su -l pi -c "/home/pi/media-mux/media-client/media-client" &
 sleep 20 #wait for all other systems including dhcp server to be ready
-su -l pi -c "/home/pi/media-mux/media-mux-autostart.sh" &
+#su -l pi -c "/home/pi/media-mux/media-mux-autostart.sh" &
 su -l pi -c "/home/pi/media-mux/media-mux-controller" &
 exit 0
