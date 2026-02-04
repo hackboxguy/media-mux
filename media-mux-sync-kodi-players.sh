@@ -281,11 +281,130 @@ if [ $KODISYNC_EXIT -ne 0 ]; then
 fi
 debug "kodisync exit code: $KODISYNC_EXIT"
 
-# Step 5: Seek all players to master position in parallel
+# Verify kodisync result - check if all players are at the same position
+# If not, re-sync them to the minimum position before seeking to master
+debug "Verifying kodisync sync result..."
+POSITIONS=""
+MIN_POS=""
+MAX_POS=""
+for device in $DEVICES; do
+	kodi_rpc "$device" '{"jsonrpc":"2.0","method":"Player.GetProperties","params":{"playerid":1,"properties":["speed","percentage","time"]},"id":1}' 1
+	if [ $? -eq 0 ]; then
+		SPEED=$(echo "$LAST_RPC_RESPONSE" | jq '.result.speed // "unknown"')
+		POS=$(echo "$LAST_RPC_RESPONSE" | jq '.result.percentage // 0')
+		debug "  $device: speed=$SPEED, position=$POS%"
+		POSITIONS="$POSITIONS $POS"
+		# Track min/max positions
+		if [ -z "$MIN_POS" ]; then
+			MIN_POS="$POS"
+			MAX_POS="$POS"
+		else
+			MIN_POS=$(awk "BEGIN {print ($POS < $MIN_POS) ? $POS : $MIN_POS}")
+			MAX_POS=$(awk "BEGIN {print ($POS > $MAX_POS) ? $POS : $MAX_POS}")
+		fi
+	fi
+done
+
+# Check if positions are within 1% of each other (kodisync tolerance)
+POS_SPREAD=$(awk "BEGIN {print $MAX_POS - $MIN_POS}")
+debug "Position spread after kodisync: $POS_SPREAD% (min: $MIN_POS%, max: $MAX_POS%)"
+
+if [ "$(awk "BEGIN {print ($POS_SPREAD > 1) ? 1 : 0}")" = "1" ]; then
+	log "WARNING: kodisync left players out of sync (spread: $POS_SPREAD%). Re-syncing to minimum position..."
+	# Seek all to minimum position to ensure sync
+	RESYNC_PAYLOAD=$(printf '{"jsonrpc":"2.0","id":"1","method":"Player.Seek","params":{"playerid":1,"value":{"percentage":%s}}}' "$MIN_POS")
+	parallel_rpc "$RESYNC_PAYLOAD" $DEVICES
+	sleep 1
+	debug "Re-synced all players to $MIN_POS%"
+fi
+
+# Step 5: Seek all players to master position
+# Note: After kodisync, players are paused. We need to seek each one and verify.
 log "Seeking all players to $PERCENTAGE%..."
-SEEK_PAYLOAD=$(printf '{"jsonrpc":"2.0","id":"1","method":"Player.Seek","params":{"playerid":1,"value":{"percentage":%s}}}' "$PERCENTAGE")
-parallel_rpc "$SEEK_PAYLOAD" $DEVICES
-sleep 0.3
+debug "Target position: $PERCENTAGE%"
+
+# Seek with verification - try up to 3 times if position is wrong
+SEEK_ATTEMPTS=3
+for attempt in $(seq 1 $SEEK_ATTEMPTS); do
+	debug "Seek attempt $attempt of $SEEK_ATTEMPTS"
+
+	# Send seek to all devices
+	SEEK_PAYLOAD=$(printf '{"jsonrpc":"2.0","id":"1","method":"Player.Seek","params":{"playerid":1,"value":{"percentage":%s}}}' "$PERCENTAGE")
+	parallel_rpc "$SEEK_PAYLOAD" $DEVICES
+
+	# Wait for seek to settle
+	sleep 2
+
+	# Verify positions - check if we're close to target
+	SEEK_OK=1
+	for device in $DEVICES; do
+		kodi_rpc "$device" '{"jsonrpc":"2.0","method":"Player.GetProperties","params":{"playerid":1,"properties":["percentage"]},"id":1}' 1
+		if [ $? -eq 0 ]; then
+			ACTUAL_POS=$(echo "$LAST_RPC_RESPONSE" | jq '.result.percentage // 0')
+			# Check if within 5% of target (allowing for keyframe seeking)
+			# Use awk for floating point comparison (more portable than bc)
+			DIFF=$(awk "BEGIN {diff=$ACTUAL_POS-$PERCENTAGE; if(diff<0) diff=-diff; print diff}")
+			debug "Device $device at $ACTUAL_POS% (target: $PERCENTAGE%, diff: $DIFF%)"
+			# If difference is more than 5%, mark as needing retry
+			IS_TOO_FAR=$(awk "BEGIN {print ($DIFF > 5) ? 1 : 0}")
+			if [ "$IS_TOO_FAR" = "1" ]; then
+				SEEK_OK=0
+			fi
+		fi
+	done
+
+	if [ $SEEK_OK -eq 1 ]; then
+		debug "Seek verified successfully on attempt $attempt"
+		break
+	else
+		log "Seek verification failed on attempt $attempt, retrying..."
+	fi
+done
+
+# Final sync check - ensure all players are at the SAME position before resuming
+# (keyframe seeking can cause slight differences between devices)
+# Retry up to 3 times to get all players synced
+FINAL_SYNC_ATTEMPTS=3
+for final_attempt in $(seq 1 $FINAL_SYNC_ATTEMPTS); do
+	debug "Final sync verification (attempt $final_attempt)..."
+	FINAL_MIN=""
+	FINAL_MAX=""
+	FINAL_POSITIONS=""
+	for device in $DEVICES; do
+		kodi_rpc "$device" '{"jsonrpc":"2.0","method":"Player.GetProperties","params":{"playerid":1,"properties":["percentage"]},"id":1}' 1
+		if [ $? -eq 0 ]; then
+			POS=$(echo "$LAST_RPC_RESPONSE" | jq '.result.percentage // 0')
+			FINAL_POSITIONS="$FINAL_POSITIONS $device:$POS"
+			if [ -z "$FINAL_MIN" ]; then
+				FINAL_MIN="$POS"
+				FINAL_MAX="$POS"
+			else
+				FINAL_MIN=$(awk "BEGIN {print ($POS < $FINAL_MIN) ? $POS : $FINAL_MIN}")
+				FINAL_MAX=$(awk "BEGIN {print ($POS > $FINAL_MAX) ? $POS : $FINAL_MAX}")
+			fi
+		fi
+	done
+
+	FINAL_SPREAD=$(awk "BEGIN {print $FINAL_MAX - $FINAL_MIN}")
+	debug "Final position spread: $FINAL_SPREAD% (min: $FINAL_MIN%, max: $FINAL_MAX%)"
+	debug "Positions:$FINAL_POSITIONS"
+
+	# If spread is within 0.2% (~120ms at 60fps = ~7 frames), we're good
+	if [ "$(awk "BEGIN {print ($FINAL_SPREAD <= 0.2) ? 1 : 0}")" = "1" ]; then
+		debug "All players synced within tolerance on attempt $final_attempt"
+		break
+	fi
+
+	# Otherwise, re-sync all to minimum position
+	if [ $final_attempt -lt $FINAL_SYNC_ATTEMPTS ]; then
+		log "Final positions differ by $FINAL_SPREAD%. Re-syncing all to $FINAL_MIN% (attempt $final_attempt)..."
+		FINAL_SYNC_PAYLOAD=$(printf '{"jsonrpc":"2.0","id":"1","method":"Player.Seek","params":{"playerid":1,"value":{"percentage":%s}}}' "$FINAL_MIN")
+		parallel_rpc "$FINAL_SYNC_PAYLOAD" $DEVICES
+		sleep 1.5
+	else
+		log "WARNING: Could not sync all players within tolerance after $FINAL_SYNC_ATTEMPTS attempts (spread: $FINAL_SPREAD%)"
+	fi
+done
 
 # Step 6: Resume playback on all players simultaneously
 # Use a tighter timing approach - prepare commands and fire together
