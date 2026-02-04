@@ -21,6 +21,11 @@ su -l pi -c "/home/pi/media-mux/avahi-publish-media-mux.sh" &
 #su -l pi -c "/home/pi/media-mux/media-client/media-client" &
 sleep 25 #wait for all other systems including dhcp server to be ready
 #su -l pi -c "/home/pi/media-mux/media-mux-autostart.sh" &
+
+# Start keyboard controller first - it needs to grab the device before Kodi
 su -l pi -c "/home/pi/media-mux/media-mux-controller" &
+sleep 2 # Give controller time to grab the keyboard device
+
+# Start Kodi after controller has grabbed the keyboard
 su -l pi -c "/usr/bin/kodi --standalone -fs &" &
 exit 0
