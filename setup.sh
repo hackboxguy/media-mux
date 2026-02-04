@@ -256,7 +256,30 @@ else
 fi
 
 #------------------------------------------------------------------------------
-# Step 8: Initialize kodisync submodule and install dependencies
+# Step 8: Configure HDMI audio output
+#------------------------------------------------------------------------------
+log_step "Configuring HDMI audio..."
+CONFIG_FILE="/boot/firmware/config.txt"
+# Add hdmi_drive=2 if not already present (forces HDMI mode with audio)
+if ! grep -q "^hdmi_drive=2" "$CONFIG_FILE" 2>/dev/null; then
+	echo "hdmi_drive=2" >> "$CONFIG_FILE"
+fi
+# Create PulseAudio config to set HDMI as default sink
+runuser -l pi -c "mkdir -p /home/pi/.config/pulse" 2>&1 >> "$LOG_FILE"
+cat > /home/pi/.config/pulse/default.pa << 'PULSE_EOF'
+.include /etc/pulse/default.pa
+# Set HDMI as default sink for media-mux
+set-default-sink alsa_output.platform-fef05700.hdmi.hdmi-stereo
+PULSE_EOF
+chown pi:pi /home/pi/.config/pulse/default.pa
+if [ $? -eq 0 ]; then
+	log_ok "HDMI audio"
+else
+	log_fail "HDMI audio (non-fatal)"
+fi
+
+#------------------------------------------------------------------------------
+# Step 9: Initialize kodisync submodule and install dependencies
 #------------------------------------------------------------------------------
 log_step "Setting up kodisync..."
 if [ ! -d "$SCRIPT_DIR/kodisync" ] || [ ! -f "$SCRIPT_DIR/kodisync/package.json" ]; then
@@ -272,7 +295,7 @@ else
 fi
 
 #------------------------------------------------------------------------------
-# Step 9: Sync filesystem
+# Step 10: Sync filesystem
 #------------------------------------------------------------------------------
 log_step "Syncing filesystem..."
 sync
