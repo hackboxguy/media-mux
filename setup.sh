@@ -168,7 +168,7 @@ log_step "Installing dependencies (this may take a while)..."
 DEBIAN_FRONTEND=noninteractive apt-get update -qq 2>&1 >> "$LOG_FILE"
 DEBIAN_FRONTEND=noninteractive apt-get install -qq -y \
 	avahi-daemon avahi-discover libnss-mdns avahi-utils \
-	kodi jq nodejs npm 2>&1 >> "$LOG_FILE"
+	kodi jq nodejs npm pulseaudio 2>&1 >> "$LOG_FILE"
 if [ $? -eq 0 ]; then
 	log_ok "dependencies"
 else
@@ -244,7 +244,8 @@ log_step "Configuring Kodi settings..."
 runuser -l pi -c 'mkdir -p /home/pi/.kodi/userdata' 2>&1 >> "$LOG_FILE"
 runuser -l pi -c "cp $SCRIPT_DIR/sources.xml /home/pi/.kodi/userdata/" 2>&1 >> "$LOG_FILE"
 runuser -l pi -c "cp $SCRIPT_DIR/guisettings.xml /home/pi/.kodi/userdata/" 2>&1 >> "$LOG_FILE"
-if [ -f "$SCRIPT_DIR/wf-panel-pi.ini" ]; then
+# Only copy wf-panel-pi.ini on Desktop (wayfire panel config, not needed on Lite)
+if [ -f "$SCRIPT_DIR/wf-panel-pi.ini" ] && command -v wf-panel >/dev/null 2>&1; then
 	runuser -l pi -c "mkdir -p /home/pi/.config" 2>&1 >> "$LOG_FILE"
 	runuser -l pi -c "cp $SCRIPT_DIR/wf-panel-pi.ini /home/pi/.config/" 2>&1 >> "$LOG_FILE"
 fi
