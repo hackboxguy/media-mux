@@ -219,12 +219,36 @@ Full log: /home/pi/media-mux/stress-test-logs/stress-test-20260204_133812.log
 
 ### Prerequisites
 
-- Raspberry Pi devices (tested with Pi 3/4/5)
-- Raspbian/Raspberry Pi OS
+- Raspberry Pi 4 devices (also works with Pi 3/5)
+- MicroSD cards (8GB+ recommended)
 - Network connectivity between all devices
 - Shared media source accessible to all devices (e.g., DLNA server)
 
-### Installation
+### Option 1: Pre-built Image (Recommended)
+
+The easiest way to get started - download the pre-built image and flash it to your SD cards.
+
+**Download**: [media-mux-v1.0.0 Pi4 Image](https://github.com/hackboxguy/media-mux/releases/download/v1.0.0/2024-10-22-raspios-bookworm-arm64-lite-media-mux-v1-0.img.xz) (~1.2GB)
+
+**Steps:**
+1. Download the image file above
+2. Flash to SD card using [balenaEtcher](https://etcher.balena.io/) or [Rufus](https://rufus.ie/)
+3. Insert SD card into Raspberry Pi 4
+4. Connect Ethernet and HDMI, then power on
+5. Repeat for each Pi (all use the same image)
+
+**That's it!** Each Pi automatically:
+- Generates a unique hostname from its MAC address (e.g., `media-mux-a1b2c3`)
+- Discovers other media-mux devices on the network
+- Auto-negotiates master/slave roles (no manual configuration needed)
+
+> **Build your own image?** See [Custom Pi Imager Build Instructions](https://github.com/hackboxguy/misc-tools/tree/main/custom-pi-imager/docs#complete-build-walkthrough-media-mux-pi4-image)
+
+---
+
+### Option 2: Manual Installation
+
+For custom setups or if you prefer to install on an existing Raspberry Pi OS.
 
 ```bash
 # Clone the repository with submodules
