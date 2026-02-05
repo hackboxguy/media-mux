@@ -9,7 +9,7 @@
 # - Player readiness verification
 #
 # Usage: media-mux-sync-kodi-players.sh [OPTIONS]
-#   --master=<hostname>  Master Kodi device (default: media-mux-0001)
+#   --master=<hostname>  Master Kodi device (default: localhost)
 #   --debuglog           Enable verbose debug output
 #   --help               Show this help message
 
@@ -17,7 +17,7 @@
 # Default configuration
 #------------------------------------------------------------------------------
 FINAL_RES=0
-MASTER_HOST="media-mux-0001"
+MASTER_HOST="localhost"
 DEBUG_LOG=0
 KODI_PORT="8888"
 CURL_TIMEOUT=5
@@ -34,13 +34,13 @@ show_help() {
 	echo "Synchronize playback across all media-mux Kodi players on the network."
 	echo ""
 	echo "Options:"
-	echo "  --master=<hostname>  Master Kodi device to sync from (default: media-mux-0001)"
+	echo "  --master=<hostname>  Master Kodi device to sync from (default: localhost)"
 	echo "  --debuglog           Enable verbose debug output"
 	echo "  --help               Show this help message"
 	echo ""
 	echo "Examples:"
-	echo "  $0                           # Use default master (media-mux-0001)"
-	echo "  $0 --master=media-mux-0002   # Use media-mux-0002 as master"
+	echo "  $0                           # Use localhost as master (auto-negotiation mode)"
+	echo "  $0 --master=media-mux-0001   # Use specific device as master"
 	echo "  $0 --debuglog                # Enable debug output"
 	echo "  $0 --master=192.168.1.100 --debuglog"
 	exit 0

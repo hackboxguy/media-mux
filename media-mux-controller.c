@@ -321,7 +321,7 @@ int main(int argc, char *argv[])
 					switch (ev.code) {
 						case KEY_1:
 							printf("KEY_1 pressed - triggering sync...\n");
-							system("/home/pi/media-mux/media-mux-sync-kodi-players.sh --master=media-mux-0001");
+							system("/home/pi/media-mux/media-mux-sync-kodi-players.sh");
 							printf("Sync complete\n");
 							break;
 						case KEY_2:
