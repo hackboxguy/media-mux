@@ -82,7 +82,7 @@ echo ""
 #------------------------------------------------------------------------------
 # Step 1: Install dependencies
 #------------------------------------------------------------------------------
-log_step "[1/8] Installing dnsmasq, minidlna, and chrony..."
+log_step "[1/10] Installing dnsmasq, minidlna, and chrony..."
 apt-get update -qq
 apt-get install -y -qq dnsmasq minidlna chrony > /dev/null 2>&1
 log_ok
@@ -90,7 +90,7 @@ log_ok
 #------------------------------------------------------------------------------
 # Step 2: Stop and disable services (will be started by boot script)
 #------------------------------------------------------------------------------
-log_step "[2/8] Configuring services..."
+log_step "[2/10] Configuring services..."
 systemctl stop dnsmasq 2>/dev/null || true
 systemctl stop minidlna 2>/dev/null || true
 systemctl stop chrony 2>/dev/null || true
@@ -102,7 +102,7 @@ log_ok
 #------------------------------------------------------------------------------
 # Step 3: Create dnsmasq configuration
 #------------------------------------------------------------------------------
-log_step "[3/8] Creating dnsmasq configuration..."
+log_step "[3/10] Creating dnsmasq configuration..."
 cat > /etc/dnsmasq.d/media-mux-selfhosted.conf << EOF
 # Media-Mux Self-Hosted DHCP/DNS Configuration
 # This file is managed by setup-selfhosted.sh
@@ -142,7 +142,7 @@ log_ok
 #------------------------------------------------------------------------------
 # Step 4: Create minidlna configuration
 #------------------------------------------------------------------------------
-log_step "[4/8] Creating minidlna configuration..."
+log_step "[4/10] Creating minidlna configuration..."
 cat > /etc/minidlna-selfhosted.conf << EOF
 # Media-Mux Self-Hosted DLNA Configuration
 # This file is managed by setup-selfhosted.sh
@@ -189,14 +189,14 @@ log_ok
 #------------------------------------------------------------------------------
 # Step 5: Create USB mount point
 #------------------------------------------------------------------------------
-log_step "[5/8] Creating USB mount point..."
+log_step "[5/10] Creating USB mount point..."
 mkdir -p "${USB_MOUNT_POINT}"
 log_ok
 
 #------------------------------------------------------------------------------
 # Step 6: Create chrony configurations
 #------------------------------------------------------------------------------
-log_step "[6/8] Creating chrony configurations..."
+log_step "[6/10] Creating chrony configurations..."
 
 # Master mode config (NTP server)
 cat > /etc/chrony/chrony-master.conf << EOF
@@ -248,7 +248,7 @@ log_ok
 #------------------------------------------------------------------------------
 # Step 7: Create boot script
 #------------------------------------------------------------------------------
-log_step "[7/8] Creating selfhosted boot script..."
+log_step "[7/10] Creating selfhosted boot script..."
 
 cat > /home/pi/media-mux/media-mux-selfhosted-boot.sh << 'BOOTSCRIPT'
 #!/bin/bash
@@ -473,7 +473,7 @@ log_ok
 #------------------------------------------------------------------------------
 # Step 8: Create systemd service
 #------------------------------------------------------------------------------
-log_step "[8/8] Creating systemd service..."
+log_step "[8/10] Creating systemd service..."
 cat > /etc/systemd/system/media-mux-selfhosted.service << EOF
 [Unit]
 Description=Media-Mux Self-Hosted Boot
@@ -498,6 +498,70 @@ systemctl enable media-mux-selfhosted.service
 log_ok
 
 #------------------------------------------------------------------------------
+# Step 9: Install Kodi Media-Mux Sync add-on
+#------------------------------------------------------------------------------
+log_step "[9/10] Installing Kodi Media-Mux Sync add-on..."
+
+KODI_USER_HOME="/home/pi"
+KODI_ADDONS_DIR="${KODI_USER_HOME}/.kodi/addons"
+KODI_USERDATA_DIR="${KODI_USER_HOME}/.kodi/userdata"
+ADDON_SRC_DIR="${SCRIPT_DIR}/kodi-addon/service.mediamux.sync"
+
+# Create Kodi directories if they don't exist
+mkdir -p "${KODI_ADDONS_DIR}"
+mkdir -p "${KODI_USERDATA_DIR}/keymaps"
+
+# Copy the add-on
+if [ -d "${ADDON_SRC_DIR}" ]; then
+    rm -rf "${KODI_ADDONS_DIR}/service.mediamux.sync"
+    cp -r "${ADDON_SRC_DIR}" "${KODI_ADDONS_DIR}/"
+    # Remove VideoOSD.xml and icon from add-on dir (they go elsewhere)
+    rm -f "${KODI_ADDONS_DIR}/service.mediamux.sync/VideoOSD.xml"
+    rm -f "${KODI_ADDONS_DIR}/service.mediamux.sync/media-mux-sync.png"
+    chown -R pi:pi "${KODI_ADDONS_DIR}/service.mediamux.sync"
+    log_ok
+else
+    log_skip "Add-on source not found at ${ADDON_SRC_DIR}"
+fi
+
+#------------------------------------------------------------------------------
+# Step 10: Patch Kodi Estuary skin with Sync button
+#------------------------------------------------------------------------------
+log_step "[10/10] Patching Kodi skin with Sync button..."
+
+SYSTEM_SKIN_DIR="/usr/share/kodi/addons/skin.estuary"
+USER_SKIN_DIR="${KODI_ADDONS_DIR}/skin.estuary"
+
+# Copy Estuary skin to user directory if not already there
+if [ -d "${SYSTEM_SKIN_DIR}" ] && [ ! -d "${USER_SKIN_DIR}" ]; then
+    cp -r "${SYSTEM_SKIN_DIR}" "${USER_SKIN_DIR}"
+fi
+
+if [ -d "${USER_SKIN_DIR}" ]; then
+    # Copy custom sync icon
+    if [ -f "${ADDON_SRC_DIR}/media-mux-sync.png" ]; then
+        mkdir -p "${USER_SKIN_DIR}/media/osd/fullscreen/buttons"
+        cp "${ADDON_SRC_DIR}/media-mux-sync.png" "${USER_SKIN_DIR}/media/osd/fullscreen/buttons/"
+    fi
+
+    # Copy patched VideoOSD.xml
+    if [ -f "${ADDON_SRC_DIR}/VideoOSD.xml" ]; then
+        cp "${ADDON_SRC_DIR}/VideoOSD.xml" "${USER_SKIN_DIR}/xml/VideoOSD.xml"
+    fi
+
+    # Copy keymap
+    if [ -f "${ADDON_SRC_DIR}/resources/keymaps/mediamux.xml" ]; then
+        cp "${ADDON_SRC_DIR}/resources/keymaps/mediamux.xml" "${KODI_USERDATA_DIR}/keymaps/"
+    fi
+
+    chown -R pi:pi "${USER_SKIN_DIR}"
+    chown -R pi:pi "${KODI_USERDATA_DIR}/keymaps"
+    log_ok
+else
+    log_skip "Kodi skin not found at ${USER_SKIN_DIR}"
+fi
+
+#------------------------------------------------------------------------------
 # Summary
 #------------------------------------------------------------------------------
 echo ""
@@ -518,6 +582,11 @@ log "    - NTP client (syncs from master)"
 echo ""
 log "USB mount point: ${USB_MOUNT_POINT}"
 log "Log file: ${LOG_FILE}"
+echo ""
+log "Kodi Sync Add-on:"
+log "  - OSD button: Tap screen during playback → 'Sync' button"
+log "  - Keyboard shortcut: Press 'S' during video"
+log "  - Programs menu: Programs → Add-ons → Media-Mux Sync"
 echo ""
 log "To test now (without reboot):"
 log "  sudo /home/pi/media-mux/media-mux-selfhosted-boot.sh"

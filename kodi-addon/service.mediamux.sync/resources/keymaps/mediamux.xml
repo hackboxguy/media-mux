@@ -1,0 +1,15 @@
+<keymap>
+    <!--
+    Media-Mux Sync Keymap
+
+    Maps 'S' key to trigger sync during video playback.
+    For touch screens, you can also map a touch gesture or
+    use the context menu (long-press during video).
+    -->
+    <FullscreenVideo>
+        <keyboard>
+            <!-- Press 'S' during video playback to sync -->
+            <s>RunScript(service.mediamux.sync)</s>
+        </keyboard>
+    </FullscreenVideo>
+</keymap>
