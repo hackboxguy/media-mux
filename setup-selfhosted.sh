@@ -515,9 +515,10 @@ mkdir -p "${KODI_USERDATA_DIR}/keymaps"
 if [ -d "${ADDON_SRC_DIR}" ]; then
     rm -rf "${KODI_ADDONS_DIR}/service.mediamux.sync"
     cp -r "${ADDON_SRC_DIR}" "${KODI_ADDONS_DIR}/"
-    # Remove VideoOSD.xml and icon from add-on dir (they go elsewhere)
+    # Remove VideoOSD.xml and icons from add-on dir (they go elsewhere)
     rm -f "${KODI_ADDONS_DIR}/service.mediamux.sync/VideoOSD.xml"
-    rm -f "${KODI_ADDONS_DIR}/service.mediamux.sync/media-mux-sync.png"
+    rm -f "${KODI_ADDONS_DIR}/service.mediamux.sync/start-sync-playback.png"
+    rm -f "${KODI_ADDONS_DIR}/service.mediamux.sync/stop-sync-playback.png"
     chown -R pi:pi "${KODI_ADDONS_DIR}/service.mediamux.sync"
     log_ok
 else
@@ -538,10 +539,13 @@ if [ -d "${SYSTEM_SKIN_DIR}" ] && [ ! -d "${USER_SKIN_DIR}" ]; then
 fi
 
 if [ -d "${USER_SKIN_DIR}" ]; then
-    # Copy custom sync icon
-    if [ -f "${ADDON_SRC_DIR}/media-mux-sync.png" ]; then
-        mkdir -p "${USER_SKIN_DIR}/media/osd/fullscreen/buttons"
-        cp "${ADDON_SRC_DIR}/media-mux-sync.png" "${USER_SKIN_DIR}/media/osd/fullscreen/buttons/"
+    # Copy custom icons (sync and stop)
+    mkdir -p "${USER_SKIN_DIR}/media/osd/fullscreen/buttons"
+    if [ -f "${ADDON_SRC_DIR}/start-sync-playback.png" ]; then
+        cp "${ADDON_SRC_DIR}/start-sync-playback.png" "${USER_SKIN_DIR}/media/osd/fullscreen/buttons/"
+    fi
+    if [ -f "${ADDON_SRC_DIR}/stop-sync-playback.png" ]; then
+        cp "${ADDON_SRC_DIR}/stop-sync-playback.png" "${USER_SKIN_DIR}/media/osd/fullscreen/buttons/"
     fi
 
     # Copy patched VideoOSD.xml

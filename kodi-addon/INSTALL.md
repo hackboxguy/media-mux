@@ -4,9 +4,10 @@ Adds a "Sync" button to the Kodi video player OSD for triggering multi-screen sy
 
 ## Features
 
-- **OSD Button** - "Sync" button in video player OSD (tap screen to show)
-- **Custom Icon** - Distinctive sync icon in the button bar
-- **Keyboard shortcut** - Press 'S' during video playback
+- **OSD Sync Button** - "Sync" button in video player OSD (tap screen to show)
+- **OSD Stop All Button** - "Stop All" button to stop playback on all screens
+- **Custom Icons** - Distinctive sync and stop icons in the button bar
+- **Keyboard shortcut** - Press 'S' during video playback to sync
 - **Touch-friendly** - Works with USB HID touch screens
 
 ## Automatic Installation (Recommended)
@@ -43,7 +44,7 @@ cp -r /usr/share/kodi/addons/skin.estuary ~/.kodi/addons/
 
 # Copy custom icon
 mkdir -p ~/.kodi/addons/skin.estuary/media/osd/fullscreen/buttons
-cp ~/.kodi/addons/service.mediamux.sync/media-mux-sync.png \
+cp ~/.kodi/addons/service.mediamux.sync/start-sync-playback.png \
    ~/.kodi/addons/skin.estuary/media/osd/fullscreen/buttons/
 
 # Copy patched VideoOSD.xml
@@ -61,12 +62,13 @@ sudo systemctl restart kodi
 
 ## How to Use
 
-### Option 1: OSD Button (Touch-Friendly)
+### Option 1: OSD Buttons (Touch-Friendly)
 
 1. Start playing a video
 2. **Tap the screen** (or press any key) to show the OSD
-3. Look for the **Sync icon** button at the right end of the button bar
-4. Tap it to synchronize all screens
+3. Look for the **Sync** and **Stop All** buttons at the right end of the button bar:
+   - **Sync** - Synchronizes playback position across all screens
+   - **Stop All** - Stops playback on all screens (master + slaves)
 
 ### Option 2: Keyboard Shortcut
 
@@ -93,14 +95,16 @@ sudo systemctl restart kodi
 ├── service.mediamux.sync/          # The add-on
 │   ├── addon.xml
 │   ├── service.py
-│   ├── default.py
+│   ├── default.py                  # Main script (handles sync/stop)
+│   ├── stop.py                     # Stop all playback logic
 │   ├── context.py
 │   └── resources/keymaps/mediamux.xml
 │
 └── skin.estuary/                   # Patched skin
-    ├── xml/VideoOSD.xml            # Modified with Sync button
+    ├── xml/VideoOSD.xml            # Modified with Sync + Stop buttons
     └── media/osd/fullscreen/buttons/
-        └── media-mux-sync.png      # Custom 74x74 icon
+        ├── start-sync-playback.png      # Sync icon (74x74)
+        └── stop-sync-playback.png  # Stop icon (74x74)
 ```
 
 ## Troubleshooting
@@ -113,7 +117,7 @@ sudo systemctl restart kodi
 
 ### Wrong icon showing
 
-1. Verify icon exists: `ls ~/.kodi/addons/skin.estuary/media/osd/fullscreen/buttons/media-mux-sync.png`
+1. Verify icon exists: `ls ~/.kodi/addons/skin.estuary/media/osd/fullscreen/buttons/start-sync-playback.png`
 2. Restart Kodi to reload textures
 
 ### Sync not working

@@ -222,10 +222,18 @@
 					</control>
 					<control type="radiobutton" id="70049">
 						<include content="OSDButton">
-							<param name="texture" value="osd/fullscreen/buttons/media-mux-sync.png"/>
+							<param name="texture" value="osd/fullscreen/buttons/start-sync-playback.png"/>
 						</include>
 						<label>Sync</label>
 						<onclick>RunScript(service.mediamux.sync)</onclick>
+						<visible>System.HasAddon(service.mediamux.sync)</visible>
+					</control>
+					<control type="radiobutton" id="70050">
+						<include content="OSDButton">
+							<param name="texture" value="osd/fullscreen/buttons/stop-sync-playback.png"/>
+						</include>
+						<label>Stop All</label>
+						<onclick>RunScript(service.mediamux.sync,stop)</onclick>
 						<visible>System.HasAddon(service.mediamux.sync)</visible>
 					</control>
 				</control>

@@ -64,19 +64,40 @@ def run_sync():
 
 
 if __name__ == "__main__":
-    if not is_master():
-        xbmcgui.Dialog().notification(
-            "Media-Mux",
-            "Not master (no USB storage)",
-            xbmcgui.NOTIFICATION_WARNING,
-            3000
-        )
-    elif not is_video_playing():
-        xbmcgui.Dialog().notification(
-            "Media-Mux",
-            "No video playing",
-            xbmcgui.NOTIFICATION_WARNING,
-            3000
-        )
+    import sys
+
+    # Check for command line arguments
+    action = "sync"  # default action
+    if len(sys.argv) > 1:
+        action = sys.argv[1].lower()
+
+    if action == "stop":
+        # Import and run stop functionality
+        from stop import run_stop_all, is_master as stop_is_master
+        if stop_is_master():
+            run_stop_all()
+        else:
+            xbmcgui.Dialog().notification(
+                "Media-Mux",
+                "Not master (no USB storage)",
+                xbmcgui.NOTIFICATION_WARNING,
+                3000
+            )
     else:
-        run_sync()
+        # Default: sync action
+        if not is_master():
+            xbmcgui.Dialog().notification(
+                "Media-Mux",
+                "Not master (no USB storage)",
+                xbmcgui.NOTIFICATION_WARNING,
+                3000
+            )
+        elif not is_video_playing():
+            xbmcgui.Dialog().notification(
+                "Media-Mux",
+                "No video playing",
+                xbmcgui.NOTIFICATION_WARNING,
+                3000
+            )
+        else:
+            run_sync()
