@@ -1,8 +1,14 @@
 # Media-Mux: Synchronized Multi-Screen Kodi Playback
 
-Media-Mux is a system for synchronizing video playback across multiple Raspberry Pi devices running Kodi. Perfect for video walls, multi-room displays, or any scenario where you need multiple screens playing the same content in "amost-perfect" sync.
+Media-Mux is a system for synchronizing video playback across multiple Raspberry Pi devices running Kodi. Perfect for video walls, multi-room displays, in-car infotainment, or any scenario where you need multiple screens playing the same content in "almost-perfect" sync.
 
 ## Architecture
+
+Media-Mux supports two deployment modes:
+
+### Mode A: External Router
+
+Uses a pocket router (e.g., GL-MT300N-V2) running OpenWrt as the DHCP/DNS/DLNA server.
 
 ```
 ┌──────────────────────────────────────────────────────────────────────────────┐
@@ -45,7 +51,55 @@ Media-Mux is a system for synchronizing video playback across multiple Raspberry
 └──────────────────────────────────────────────────────────────────────────────┘
 ```
 
+### Mode B: Self-Hosted (No External Router)
+
+Eliminates the external router entirely. The Pi with USB storage becomes the master, providing DHCP, DNS, NTP, and DLNA services.
+
+```
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                              Network (LAN)                                   │
+│                                                                              │
+│  ┌─────────────────────────────────────────────────────────────────────────┐ │
+│  │                          PoE Switch                                     │ │
+│  │  (Powers all Pi devices via Ethernet - single cable per device)         │ │
+│  └────┬─────────────┬─────────────┬─────────────┬──────────────────────────┘ │
+│       │             │             │             │                            │
+│       │ PoE+Data    │ PoE+Data    │ PoE+Data    │ PoE+Data                   │
+│       ▼             ▼             ▼             ▼                            │
+│  ┌─────────┐   ┌─────────┐   ┌─────────┐   ┌─────────┐                       │
+│  │ Pi4     │   │ Pi4     │   │ Pi4     │   │ Pi4     │                       │
+│  │ +PoE HAT│   │ +PoE HAT│   │ +PoE HAT│   │ +PoE HAT│                       │
+│  │         │   │         │   │         │   │         │                       │
+│  │ ┌─────┐ │   │         │   │         │   │         │                       │
+│  │ │ USB │ │   │  Kodi   │   │  Kodi   │   │  Kodi   │                       │
+│  │ │Media│ │   │ Client  │   │ Client  │   │ Client  │                       │
+│  │ └─────┘ │   │         │   │         │   │         │                       │
+│  │         │   │         │   │         │   │         │                       │
+│  │ MASTER  │   │  SLAVE  │   │  SLAVE  │   │  SLAVE  │                       │
+│  │192.168. │   │  DHCP   │   │  DHCP   │   │  DHCP   │                       │
+│  │  8.1    │   │ Client  │   │ Client  │   │ Client  │                       │
+│  └─────────┘   └─────────┘   └─────────┘   └─────────┘                       │
+│       │                                                                      │
+│       │  Services provided by Master:                                        │
+│       ├── DHCP Server (192.168.8.100-200)                                    │
+│       ├── DNS Server                                                         │
+│       ├── NTP Server (chrony)                                                │
+│       └── DLNA Server (minidlna :8200)                                       │
+│                                                                              │
+│  Role Detection: USB storage present → Master, otherwise → Slave            │
+└──────────────────────────────────────────────────────────────────────────────┘
+```
+
+**Key Benefits of Self-Hosted Mode:**
+- No external router required
+- Single cable (PoE) provides both power and network to each Pi
+- Automatic master election based on USB storage presence
+- All terminals use the same SD card image
+- NTP time sync ensures accurate playback coordination
+
 ### Network Components
+
+**Mode A (External Router):**
 
 | Component | Role | IP/Port |
 |-----------|------|---------|
@@ -53,6 +107,14 @@ Media-Mux is a system for synchronizing video playback across multiple Raspberry
 | Network Switch | Connects all devices via Ethernet | - |
 | media-mux-0001 | Master Kodi player | DHCP assigned, :8888 |
 | media-mux-0002+ | Slave Kodi players | DHCP assigned, :8888 |
+
+**Mode B (Self-Hosted):**
+
+| Component | Role | IP/Port |
+|-----------|------|---------|
+| PoE Switch | Power + network for all Pi devices | - |
+| Master Pi (with USB) | DHCP, DNS, NTP, DLNA, Kodi | 192.168.8.1, :8200, :8888 |
+| Slave Pi (no USB) | Kodi player | DHCP assigned, :8888 |
 
 ## How Synchronization Works
 
@@ -246,9 +308,9 @@ The easiest way to get started - download the pre-built image and flash it to yo
 
 ---
 
-### Option 2: Manual Installation
+### Option 2: Manual Installation (External Router Mode)
 
-For custom setups or if you prefer to install on an existing Raspberry Pi OS.
+For custom setups using an external router for DHCP/DNS/DLNA.
 
 ```bash
 # Clone the repository with submodules
@@ -275,8 +337,28 @@ Options:
   --help        Show help message
 ```
 
+---
+
+### Option 3: Manual Installation (Self-Hosted Mode)
+
+For deployments without an external router. One Pi becomes the master automatically when USB storage is attached.
+
+```bash
+# Clone the repository with submodules
+git clone --recursive https://github.com/hackboxguy/media-mux.git
+cd media-mux
+
+# Run self-hosted setup on ALL Pi devices (same command for all)
+sudo ./setup-selfhosted.sh
+```
+
+On each boot:
+- **Pi with USB storage attached** → Becomes master (static IP 192.168.8.1, runs DHCP/DNS/NTP/DLNA)
+- **Pi without USB storage** → Becomes slave (DHCP client, syncs time from master)
+
 ### What Setup Does
 
+**Standard setup (setup.sh):**
 1. Creates autoplay symlink (master vs slave behavior)
 2. Installs dependencies (avahi, kodi, nodejs, jq, etc.)
 3. Configures Avahi service publishing
@@ -285,6 +367,14 @@ Options:
 6. Compiles media-mux-controller
 7. Sets up Kodi configuration
 8. Installs kodisync npm dependencies
+
+**Self-hosted setup (setup-selfhosted.sh) additionally:**
+1. Installs dnsmasq, minidlna, chrony
+2. Configures DHCP server (192.168.8.100-200)
+3. Configures DLNA media server
+4. Configures NTP server/client (chrony)
+5. Creates boot script for automatic role detection
+6. Sets up systemd service for boot-time configuration
 
 ## Triggering Sync
 
@@ -309,6 +399,10 @@ cat /var/log/media-mux-setup.log
 
 # Stress test logs
 ls -la /home/pi/media-mux/stress-test-logs/
+
+# Self-hosted mode logs
+cat /var/log/media-mux-selfhosted.log
+journalctl -u media-mux-selfhosted.service
 ```
 
 ### Verify Device Discovery
@@ -332,14 +426,28 @@ curl -s -X POST -H "content-type:application/json" \
 | Position spread too high | Video may have sparse keyframes; try different content |
 | kodisync not found | Run `cd kodisync && npm install` |
 
+**Self-hosted mode issues:**
+
+| Issue | Solution |
+|-------|----------|
+| DLNA source shows "Couldn't connect" | Check USB is mounted: `mount \| grep /media/usb` |
+| Client not getting IP address | Verify master has USB attached and dnsmasq running: `pgrep dnsmasq` |
+| minidlna not starting | Check permissions: `ls -la /var/lib/minidlna` (should be owned by minidlna) |
+| Time wrong on clients | Wait a few minutes for NTP sync, check: `chronyc sources` |
+
 ## Dependencies
 
+**Core (all modes):**
 - `avahi-daemon`, `avahi-utils` - mDNS discovery
 - `kodi` - Media player
 - `jq` - JSON processing
 - `nodejs`, `npm` - For kodisync
 - `curl` - HTTP requests
-- `awk` - Floating point calculations
+
+**Self-hosted mode (additional):**
+- `dnsmasq` - DHCP and DNS server
+- `minidlna` - DLNA media server
+- `chrony` - NTP time synchronization
 
 ## File Structure
 
@@ -347,7 +455,9 @@ curl -s -X POST -H "content-type:application/json" \
 media-mux/
 ├── media-mux-sync-kodi-players.sh   # Main sync script
 ├── stress-test-sync.sh              # Stress testing tool
-├── setup.sh                         # Installation script
+├── setup.sh                         # Installation script (external router mode)
+├── setup-selfhosted.sh              # Installation script (self-hosted mode)
+├── media-mux-selfhosted-boot.sh     # Boot script for role detection (created by setup)
 ├── media-mux-controller.c           # Keyboard/IR input handler
 ├── kodisync/                        # Git submodule - frame-accurate sync
 │   └── kodisync.js                  # Modified with --once mode
