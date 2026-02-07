@@ -82,15 +82,15 @@ echo ""
 #------------------------------------------------------------------------------
 # Step 1: Install dependencies
 #------------------------------------------------------------------------------
-log_step "[1/10] Installing dnsmasq, minidlna, and chrony..."
+log_step "[1/11] Installing dnsmasq, minidlna, chrony, and sqlite3..."
 apt-get update -qq
-apt-get install -y -qq dnsmasq minidlna chrony > /dev/null 2>&1
+apt-get install -y -qq dnsmasq minidlna chrony sqlite3 > /dev/null 2>&1
 log_ok
 
 #------------------------------------------------------------------------------
 # Step 2: Stop and disable services (will be started by boot script)
 #------------------------------------------------------------------------------
-log_step "[2/10] Configuring services..."
+log_step "[2/11] Configuring services..."
 systemctl stop dnsmasq 2>/dev/null || true
 systemctl stop minidlna 2>/dev/null || true
 systemctl stop chrony 2>/dev/null || true
@@ -102,7 +102,7 @@ log_ok
 #------------------------------------------------------------------------------
 # Step 3: Create dnsmasq configuration
 #------------------------------------------------------------------------------
-log_step "[3/10] Creating dnsmasq configuration..."
+log_step "[3/11] Creating dnsmasq configuration..."
 cat > /etc/dnsmasq.d/media-mux-selfhosted.conf << EOF
 # Media-Mux Self-Hosted DHCP/DNS Configuration
 # This file is managed by setup-selfhosted.sh
@@ -142,7 +142,7 @@ log_ok
 #------------------------------------------------------------------------------
 # Step 4: Create minidlna configuration
 #------------------------------------------------------------------------------
-log_step "[4/10] Creating minidlna configuration..."
+log_step "[4/11] Creating minidlna configuration..."
 cat > /etc/minidlna-selfhosted.conf << EOF
 # Media-Mux Self-Hosted DLNA Configuration
 # This file is managed by setup-selfhosted.sh
@@ -189,14 +189,14 @@ log_ok
 #------------------------------------------------------------------------------
 # Step 5: Create USB mount point
 #------------------------------------------------------------------------------
-log_step "[5/10] Creating USB mount point..."
+log_step "[5/11] Creating USB mount point..."
 mkdir -p "${USB_MOUNT_POINT}"
 log_ok
 
 #------------------------------------------------------------------------------
 # Step 6: Create chrony configurations
 #------------------------------------------------------------------------------
-log_step "[6/10] Creating chrony configurations..."
+log_step "[6/11] Creating chrony configurations..."
 
 # Master mode config (NTP server)
 cat > /etc/chrony/chrony-master.conf << EOF
@@ -248,7 +248,7 @@ log_ok
 #------------------------------------------------------------------------------
 # Step 7: Create boot script
 #------------------------------------------------------------------------------
-log_step "[7/10] Creating selfhosted boot script..."
+log_step "[7/11] Creating selfhosted boot script..."
 
 cat > /home/pi/media-mux/media-mux-selfhosted-boot.sh << 'BOOTSCRIPT'
 #!/bin/bash
@@ -473,7 +473,7 @@ log_ok
 #------------------------------------------------------------------------------
 # Step 8: Create systemd service
 #------------------------------------------------------------------------------
-log_step "[8/10] Creating systemd service..."
+log_step "[8/11] Creating systemd service..."
 cat > /etc/systemd/system/media-mux-selfhosted.service << EOF
 [Unit]
 Description=Media-Mux Self-Hosted Boot
@@ -500,7 +500,7 @@ log_ok
 #------------------------------------------------------------------------------
 # Step 9: Install Kodi Media-Mux Sync add-on
 #------------------------------------------------------------------------------
-log_step "[9/10] Installing Kodi Media-Mux Sync add-on..."
+log_step "[9/11] Installing Kodi Media-Mux Sync add-on..."
 
 KODI_USER_HOME="/home/pi"
 KODI_ADDONS_DIR="${KODI_USER_HOME}/.kodi/addons"
@@ -528,7 +528,7 @@ fi
 #------------------------------------------------------------------------------
 # Step 10: Patch Kodi Estuary skin with Sync button
 #------------------------------------------------------------------------------
-log_step "[10/10] Patching Kodi skin with Sync button..."
+log_step "[10/11] Patching Kodi skin with Sync button..."
 
 SYSTEM_SKIN_DIR="/usr/share/kodi/addons/skin.estuary"
 USER_SKIN_DIR="${KODI_ADDONS_DIR}/skin.estuary"
@@ -564,6 +564,50 @@ if [ -d "${USER_SKIN_DIR}" ]; then
 else
     log_skip "Kodi skin not found at ${USER_SKIN_DIR}"
 fi
+
+#------------------------------------------------------------------------------
+# Step 11: Configure Kodi addons (auto-enable our addon, disable version check)
+#------------------------------------------------------------------------------
+log_step "[11/11] Configuring Kodi addons database..."
+
+KODI_DB_DIR="${KODI_USER_HOME}/.kodi/userdata/Database"
+mkdir -p "${KODI_DB_DIR}"
+
+# Find existing Addons database or determine version to create
+# Kodi 20 uses Addons33.db, Kodi 21 uses Addons34.db
+ADDONS_DB=$(find "${KODI_DB_DIR}" -name "Addons*.db" 2>/dev/null | head -1)
+
+if [ -z "${ADDONS_DB}" ]; then
+    # No database exists yet - create Addons33.db (Kodi 20 Nexus)
+    ADDONS_DB="${KODI_DB_DIR}/Addons33.db"
+fi
+
+# Create/update the addons database
+# Only modify the installed table - don't touch version table (Kodi manages it)
+sqlite3 "${ADDONS_DB}" <<'SQLEOF'
+-- Create installed table if not exists (matches Kodi schema)
+CREATE TABLE IF NOT EXISTS installed (
+    id INTEGER PRIMARY KEY,
+    addonID TEXT UNIQUE,
+    enabled INTEGER DEFAULT 1,
+    installDate TEXT,
+    lastUpdated TEXT,
+    lastUsed TEXT,
+    origin TEXT DEFAULT ''
+);
+
+-- Enable our Media-Mux sync addon (no startup prompt)
+INSERT OR REPLACE INTO installed (addonID, enabled, installDate, origin)
+VALUES ('service.mediamux.sync', 1, datetime('now'), 'user');
+
+-- Disable version check addon (no "new version available" popup)
+INSERT OR REPLACE INTO installed (addonID, enabled, installDate, origin)
+VALUES ('service.xbmc.versioncheck', 0, datetime('now'), 'system');
+SQLEOF
+
+chown pi:pi "${ADDONS_DB}"
+chown -R pi:pi "${KODI_DB_DIR}"
+log_ok
 
 #------------------------------------------------------------------------------
 # Summary
