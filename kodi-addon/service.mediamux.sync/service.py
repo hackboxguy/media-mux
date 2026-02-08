@@ -86,6 +86,17 @@ class MediaMuxPlayer(xbmc.Player):
         self.sync_shown = False
 
 
+def update_master_property():
+    """Update the skin property to indicate master/slave mode"""
+    window = xbmcgui.Window(10000)  # Home window
+    if is_master():
+        window.setProperty("mediamux.ismaster", "true")
+        return True
+    else:
+        window.clearProperty("mediamux.ismaster")
+        return False
+
+
 class MediaMuxSyncService:
     """
     Service that monitors for a custom action to trigger sync.
@@ -93,17 +104,22 @@ class MediaMuxSyncService:
     The sync can be triggered by:
     1. Mapped key in keymap (recommended for touch)
     2. Running the addon directly from Programs menu
+
+    Also sets a skin property 'mediamux.ismaster' that VideoOSD.xml uses
+    to show/hide the Sync and Stop buttons (only visible on master).
     """
 
     def __init__(self):
         self.monitor = xbmc.Monitor()
 
     def run(self):
-        """Main service loop - just keeps addon alive"""
+        """Main service loop - updates master status property"""
         xbmc.log("MediaMux Sync Service started", xbmc.LOGINFO)
 
-        # Check if we're master and log status
-        if is_master():
+        # Initial check and set property
+        is_master_mode = update_master_property()
+
+        if is_master_mode:
             xbmc.log("MediaMux: Running in MASTER mode (USB detected)", xbmc.LOGINFO)
             xbmcgui.Dialog().notification(
                 "Media-Mux",
@@ -114,10 +130,12 @@ class MediaMuxSyncService:
         else:
             xbmc.log("MediaMux: Running in SLAVE mode (no USB)", xbmc.LOGINFO)
 
-        # Keep service running (for future enhancements)
+        # Keep service running and periodically update master status
+        # (in case USB is plugged/unplugged while Kodi is running)
         while not self.monitor.abortRequested():
-            if self.monitor.waitForAbort(10):
+            if self.monitor.waitForAbort(5):  # Check every 5 seconds
                 break
+            update_master_property()
 
         xbmc.log("MediaMux Sync Service stopped", xbmc.LOGINFO)
 

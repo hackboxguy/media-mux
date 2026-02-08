@@ -220,21 +220,23 @@
 						<onclick>SetProperty(settingslist_header,$LOCALIZE[5],home)</onclick>
 						<onclick>ActivateWindow(1101)</onclick>
 					</control>
+					<!-- Media-Mux Sync button - only visible on master (USB mounted) -->
 					<control type="radiobutton" id="70049">
 						<include content="OSDButton">
 							<param name="texture" value="osd/fullscreen/buttons/start-sync-playback.png"/>
 						</include>
 						<label>Sync</label>
 						<onclick>RunScript(service.mediamux.sync)</onclick>
-						<visible>System.HasAddon(service.mediamux.sync)</visible>
+						<visible>System.HasAddon(service.mediamux.sync) + !String.IsEmpty(Window(Home).Property(mediamux.ismaster))</visible>
 					</control>
+					<!-- Media-Mux Stop All button - only visible on master (USB mounted) -->
 					<control type="radiobutton" id="70050">
 						<include content="OSDButton">
 							<param name="texture" value="osd/fullscreen/buttons/stop-sync-playback.png"/>
 						</include>
 						<label>Stop All</label>
 						<onclick>RunScript(service.mediamux.sync,stop)</onclick>
-						<visible>System.HasAddon(service.mediamux.sync)</visible>
+						<visible>System.HasAddon(service.mediamux.sync) + !String.IsEmpty(Window(Home).Property(mediamux.ismaster))</visible>
 					</control>
 				</control>
 			</control>
