@@ -226,6 +226,7 @@
 							<param name="texture" value="osd/fullscreen/buttons/start-sync-playback.png"/>
 						</include>
 						<label>Sync</label>
+						<label2>Sync all screens</label2>
 						<onclick>RunScript(service.mediamux.sync)</onclick>
 						<visible>System.HasAddon(service.mediamux.sync) + !String.IsEmpty(Window(Home).Property(mediamux.ismaster))</visible>
 					</control>
@@ -235,6 +236,7 @@
 							<param name="texture" value="osd/fullscreen/buttons/stop-sync-playback.png"/>
 						</include>
 						<label>Stop All</label>
+						<label2>Stop all screens</label2>
 						<onclick>RunScript(service.mediamux.sync,stop)</onclick>
 						<visible>System.HasAddon(service.mediamux.sync) + !String.IsEmpty(Window(Home).Property(mediamux.ismaster))</visible>
 					</control>
