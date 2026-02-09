@@ -290,7 +290,7 @@ Full log: /home/pi/media-mux/stress-test-logs/stress-test-20260204_133812.log
 
 The easiest way to get started - download the pre-built image and flash it to your SD cards.
 
-**Download**: [media-mux-v1.0.0 Pi4 Image](https://github.com/hackboxguy/media-mux/releases/download/v1.0.0/2024-10-22-raspios-bookworm-arm64-lite-media-mux-v1-0.img.xz) (~1.2GB)
+**Download**: [media-mux-v2.1.0 Pi4 Image](https://github.com/hackboxguy/media-mux/releases/download/v2.1.0/2024-10-22-raspios-bookworm-arm64-lite-media-mux-v2-1.img.xz) (~1.2GB)
 
 **Steps:**
 1. Download the image file above
@@ -375,8 +375,26 @@ On each boot:
 4. Configures NTP server/client (chrony)
 5. Creates boot script for automatic role detection
 6. Sets up systemd service for boot-time configuration
+7. Installs Media-Mux Sync Kodi addon with OSD buttons
+8. Patches Estuary skin for Sync/Stop button visibility
+9. Copies pre-configured Addons33.db (suppresses startup prompts)
 
 ## Triggering Sync
+
+### OSD Touch Buttons (Recommended for Touch Screens)
+
+The Kodi addon adds touch-friendly **Sync** and **Stop All** buttons to the video player OSD:
+
+1. Start playing a video on the **master device** (USB storage mounted)
+2. Tap the screen (or press any key) to show the OSD
+3. Look for the buttons at the right end of the button bar:
+   - **Sync** - Synchronizes playback position across all screens
+   - **Stop All** - Stops playback on all screens (master + slaves)
+
+> **Note:** These buttons only appear on the master device (USB mounted). Slave devices won't see them.
+
+### Keyboard Shortcut
+During video playback on master, press **'S'** key to trigger sync immediately.
 
 ### Manual (SSH)
 ```bash
@@ -435,6 +453,16 @@ curl -s -X POST -H "content-type:application/json" \
 | minidlna not starting | Check permissions: `ls -la /var/lib/minidlna` (should be owned by minidlna) |
 | Time wrong on clients | Wait a few minutes for NTP sync, check: `chronyc sources` |
 
+**Kodi addon issues:**
+
+| Issue | Solution |
+|-------|----------|
+| Sync/Stop buttons not appearing | Buttons only show on master (USB mounted). Check: `mount \| grep /media/usb` |
+| "Enable addon?" prompt on startup | Addons33.db template missing. See [kodi-addon/INSTALL.md](kodi-addon/INSTALL.md) |
+| Wrong button description showing | Restart Kodi to reload skin: `sudo systemctl restart kodi` |
+
+> See [kodi-addon/INSTALL.md](kodi-addon/INSTALL.md) for detailed Kodi addon troubleshooting.
+
 ## Dependencies
 
 **Core (all modes):**
@@ -454,6 +482,7 @@ curl -s -X POST -H "content-type:application/json" \
 ```
 media-mux/
 ├── media-mux-sync-kodi-players.sh   # Main sync script
+├── media-mux-stop-kodi-players.sh   # Stop all players script
 ├── stress-test-sync.sh              # Stress testing tool
 ├── setup.sh                         # Installation script (external router mode)
 ├── setup-selfhosted.sh              # Installation script (self-hosted mode)
@@ -461,6 +490,14 @@ media-mux/
 ├── media-mux-controller.c           # Keyboard/IR input handler
 ├── kodisync/                        # Git submodule - frame-accurate sync
 │   └── kodisync.js                  # Modified with --once mode
+├── kodi-addon/                      # Kodi addon for OSD sync buttons
+│   ├── service.mediamux.sync/       # The addon package
+│   │   ├── service.py               # Background service (sets master property)
+│   │   ├── default.py               # Sync trigger handler
+│   │   ├── stop.py                  # Stop all playback handler
+│   │   └── VideoOSD.xml             # Patched skin for Sync/Stop buttons
+│   └── templates/Database/          # Pre-configured Kodi database
+│       └── Addons33.db              # Suppresses startup prompts
 ├── rc.local                         # Startup script (slave)
 ├── rc.local.master                  # Startup script (master)
 ├── sources.xml                      # Kodi media sources config
