@@ -82,9 +82,9 @@ echo ""
 #------------------------------------------------------------------------------
 # Step 1: Install dependencies
 #------------------------------------------------------------------------------
-log_step "[1/12] Installing dnsmasq, minidlna, chrony, and sqlite3..."
+log_step "[1/12] Installing dnsmasq, minidlna, chrony, sqlite3, netcat..."
 apt-get update -qq
-apt-get install -y -qq dnsmasq minidlna chrony sqlite3 > /dev/null 2>&1
+apt-get install -y -qq dnsmasq minidlna chrony sqlite3 netcat-openbsd > /dev/null 2>&1
 log_ok
 
 #------------------------------------------------------------------------------
