@@ -17,6 +17,7 @@
 # Default configuration
 #------------------------------------------------------------------------------
 FINAL_RES=0
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 MASTER_HOST="localhost"
 DEBUG_LOG=0
 KODI_PORT="8888"
@@ -270,9 +271,9 @@ log "Running kodisync to pause all players at same frame..."
 debug "kodisync devices: $TMP_DEVICES"
 KODISYNC_TIMEOUT=20
 if [ $DEBUG_LOG -eq 1 ]; then
-	node /home/pi/media-mux/kodisync/kodisync.js --once --timeout $KODISYNC_TIMEOUT $TMP_DEVICES
+	node "$SCRIPT_DIR/kodisync/kodisync.js" --once --timeout $KODISYNC_TIMEOUT $TMP_DEVICES
 else
-	node /home/pi/media-mux/kodisync/kodisync.js --once --timeout $KODISYNC_TIMEOUT $TMP_DEVICES >/dev/null 2>&1
+	node "$SCRIPT_DIR/kodisync/kodisync.js" --once --timeout $KODISYNC_TIMEOUT $TMP_DEVICES >/dev/null 2>&1
 fi
 KODISYNC_EXIT=$?
 
@@ -389,8 +390,9 @@ for final_attempt in $(seq 1 $FINAL_SYNC_ATTEMPTS); do
 	debug "Final position spread: $FINAL_SPREAD% (min: $FINAL_MIN%, max: $FINAL_MAX%)"
 	debug "Positions:$FINAL_POSITIONS"
 
-	# If spread is within 0.2% (~120ms at 60fps = ~7 frames), we're good
-	if [ "$(awk "BEGIN {print ($FINAL_SPREAD <= 0.2) ? 1 : 0}")" = "1" ]; then
+	# If spread is within 0.02% (~12ms on a 60s video), we're good
+	# Tighter than keyframe interval to ensure all devices are on the SAME keyframe
+	if [ "$(awk "BEGIN {print ($FINAL_SPREAD <= 0.02) ? 1 : 0}")" = "1" ]; then
 		debug "All players synced within tolerance on attempt $final_attempt"
 		break
 	fi
@@ -407,21 +409,88 @@ for final_attempt in $(seq 1 $FINAL_SYNC_ATTEMPTS); do
 done
 
 # Step 6: Resume playback on all players simultaneously
-# Use a tighter timing approach - prepare commands and fire together
+# Use Player.SetSpeed instead of PlayPause to avoid toggle inversion
+# (if kodisync failed, players may still be playing - PlayPause would pause them)
 log "Resuming playback on all players..."
-PLAY_PAYLOAD='{"jsonrpc":"2.0","method":"Player.PlayPause","params":{"playerid":1},"id":1}'
+PLAY_PAYLOAD='{"jsonrpc":"2.0","method":"Player.SetSpeed","params":{"playerid":1,"speed":1},"id":1}'
 
-# Fire all play commands as close together as possible
+NTP_TRIGGER_PORT=9199
+NTP_TRIGGER_USED=0
+
+# Probe ntp-trigger service and capture pong (includes device's NTP-synced clock)
+ntp_trigger_probe() {
+	local device="$1"
+	NTP_LAST_PONG=$(echo '{"v":1,"type":"ping"}' | timeout 0.5 nc -u -w 1 "$device" $NTP_TRIGGER_PORT 2>/dev/null)
+	echo "$NTP_LAST_PONG" | grep -q '"pong"'
+}
+
+# Try NTP-triggered synchronized resume
+NTP_AVAILABLE=1
 for device in $DEVICES; do
-	curl -s --connect-timeout 2 -m 3 \
-		-X POST -H "content-type:application/json" \
-		"http://${device}:${KODI_PORT}/jsonrpc" \
-		-d "$PLAY_PAYLOAD" >/dev/null 2>&1 &
+	if ! ntp_trigger_probe "$device"; then
+		debug "ntp-trigger not available on $device"
+		NTP_AVAILABLE=0
+		break
+	fi
+	debug "ntp-trigger available on $device"
 done
 
-# Wait for all background curl processes
-wait
+# Get fresh reference time and compute trigger time in a SINGLE python3 process.
+# This avoids the ~30ms overhead of spawning nc + 2x python3 subprocesses that
+# caused the trigger to arrive in the past instead of the future.
+NTP_TRIGGER_INFO=""
+if [ $NTP_AVAILABLE -eq 1 ]; then
+	FIRST_DEVICE=$(echo $DEVICES | awk '{print $1}')
+	NTP_DELAY=0.5
+	NTP_TRIGGER_INFO=$(python3 -c "
+import socket, json
+sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+sock.settimeout(0.5)
+sock.sendto(json.dumps({'v':1,'type':'ping'}).encode(), ('$FIRST_DEVICE', $NTP_TRIGGER_PORT))
+data, _ = sock.recvfrom(2048)
+ref_time = json.loads(data)['time']
+trigger_time = ref_time + $NTP_DELAY
+print(f'{ref_time} {trigger_time}')
+sock.close()
+" 2>/dev/null)
+	debug "ntp-trigger timing from $FIRST_DEVICE: $NTP_TRIGGER_INFO"
+fi
 
-log "Sync operation completed"
+NTP_REF_TIME=$(echo "$NTP_TRIGGER_INFO" | awk '{print $1}')
+TRIGGER_TIME=$(echo "$NTP_TRIGGER_INFO" | awk '{print $2}')
+
+if [ $NTP_AVAILABLE -eq 1 ] && [ -n "$TRIGGER_TIME" ]; then
+	# Absolute timestamp mode: all devices target the SAME wall-clock moment
+	# Uses the Pi4's NTP-synced clock (not caller's clock) so all devices agree
+	# Even if UDP delivery has 1-5ms jitter, every device busy-waits to the same T
+	debug "NTP trigger absolute time: ${TRIGGER_TIME} (ref ${NTP_REF_TIME} + ${NTP_DELAY}s)"
+
+	# Build trigger message with absolute timestamp
+	TRIGGER_MSG=$(printf '{"v":1,"type":"trigger","t":%s,"rpc":%s}' "$TRIGGER_TIME" "$PLAY_PAYLOAD")
+
+	# Send trigger to all devices via UDP (nearly instant, connectionless)
+	for device in $DEVICES; do
+		echo "$TRIGGER_MSG" | nc -u -w 0 "$device" $NTP_TRIGGER_PORT &
+	done
+	wait
+
+	NTP_TRIGGER_USED=1
+	log "NTP-triggered resume sent (absolute T, delay: ${NTP_DELAY}s)"
+
+	# Wait for the trigger time to pass, plus a small margin
+	sleep 0.7
+else
+	log "NTP trigger not available, falling back to curl-based resume"
+	# Original curl-based approach (backward compatible fallback)
+	for device in $DEVICES; do
+		curl -s --connect-timeout 2 -m 3 \
+			-X POST -H "content-type:application/json" \
+			"http://${device}:${KODI_PORT}/jsonrpc" \
+			-d "$PLAY_PAYLOAD" >/dev/null 2>&1 &
+	done
+	wait
+fi
+
+log "Sync operation completed (ntp_trigger=$NTP_TRIGGER_USED)"
 debug "Sync finished successfully"
 exit $FINAL_RES

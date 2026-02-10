@@ -82,7 +82,7 @@ echo ""
 #------------------------------------------------------------------------------
 # Step 1: Install dependencies
 #------------------------------------------------------------------------------
-log_step "[1/11] Installing dnsmasq, minidlna, chrony, and sqlite3..."
+log_step "[1/12] Installing dnsmasq, minidlna, chrony, and sqlite3..."
 apt-get update -qq
 apt-get install -y -qq dnsmasq minidlna chrony sqlite3 > /dev/null 2>&1
 log_ok
@@ -90,7 +90,7 @@ log_ok
 #------------------------------------------------------------------------------
 # Step 2: Stop and disable services (will be started by boot script)
 #------------------------------------------------------------------------------
-log_step "[2/11] Configuring services..."
+log_step "[2/12] Configuring services..."
 systemctl stop dnsmasq 2>/dev/null || true
 systemctl stop minidlna 2>/dev/null || true
 systemctl stop chrony 2>/dev/null || true
@@ -102,7 +102,7 @@ log_ok
 #------------------------------------------------------------------------------
 # Step 3: Create dnsmasq configuration
 #------------------------------------------------------------------------------
-log_step "[3/11] Creating dnsmasq configuration..."
+log_step "[3/12] Creating dnsmasq configuration..."
 cat > /etc/dnsmasq.d/media-mux-selfhosted.conf << EOF
 # Media-Mux Self-Hosted DHCP/DNS Configuration
 # This file is managed by setup-selfhosted.sh
@@ -142,7 +142,7 @@ log_ok
 #------------------------------------------------------------------------------
 # Step 4: Create minidlna configuration
 #------------------------------------------------------------------------------
-log_step "[4/11] Creating minidlna configuration..."
+log_step "[4/12] Creating minidlna configuration..."
 cat > /etc/minidlna-selfhosted.conf << EOF
 # Media-Mux Self-Hosted DLNA Configuration
 # This file is managed by setup-selfhosted.sh
@@ -189,14 +189,14 @@ log_ok
 #------------------------------------------------------------------------------
 # Step 5: Create USB mount point
 #------------------------------------------------------------------------------
-log_step "[5/11] Creating USB mount point..."
+log_step "[5/12] Creating USB mount point..."
 mkdir -p "${USB_MOUNT_POINT}"
 log_ok
 
 #------------------------------------------------------------------------------
 # Step 6: Create chrony configurations
 #------------------------------------------------------------------------------
-log_step "[6/11] Creating chrony configurations..."
+log_step "[6/12] Creating chrony configurations..."
 
 # Master mode config (NTP server)
 cat > /etc/chrony/chrony-master.conf << EOF
@@ -248,7 +248,7 @@ log_ok
 #------------------------------------------------------------------------------
 # Step 7: Create boot script
 #------------------------------------------------------------------------------
-log_step "[7/11] Creating selfhosted boot script..."
+log_step "[7/12] Creating selfhosted boot script..."
 
 cat > /home/pi/media-mux/media-mux-selfhosted-boot.sh << 'BOOTSCRIPT'
 #!/bin/bash
@@ -473,7 +473,7 @@ log_ok
 #------------------------------------------------------------------------------
 # Step 8: Create systemd service
 #------------------------------------------------------------------------------
-log_step "[8/11] Creating systemd service..."
+log_step "[8/12] Creating systemd service..."
 cat > /etc/systemd/system/media-mux-selfhosted.service << EOF
 [Unit]
 Description=Media-Mux Self-Hosted Boot
@@ -498,9 +498,24 @@ systemctl enable media-mux-selfhosted.service
 log_ok
 
 #------------------------------------------------------------------------------
-# Step 9: Install Kodi Media-Mux Sync add-on
+# Step 9: Install NTP trigger service
 #------------------------------------------------------------------------------
-log_step "[9/11] Installing Kodi Media-Mux Sync add-on..."
+log_step "[9/12] Installing NTP trigger service..."
+
+cp "${SCRIPT_DIR}/ntp-trigger.py" /home/pi/media-mux/ntp-trigger.py
+chmod +x /home/pi/media-mux/ntp-trigger.py
+chown pi:pi /home/pi/media-mux/ntp-trigger.py
+
+cp "${SCRIPT_DIR}/ntp-trigger.service" /etc/systemd/system/ntp-trigger.service
+
+systemctl daemon-reload
+systemctl enable ntp-trigger.service
+log_ok
+
+#------------------------------------------------------------------------------
+# Step 10: Install Kodi Media-Mux Sync add-on
+#------------------------------------------------------------------------------
+log_step "[10/12] Installing Kodi Media-Mux Sync add-on..."
 
 KODI_USER_HOME="/home/pi"
 KODI_ADDONS_DIR="${KODI_USER_HOME}/.kodi/addons"
@@ -526,9 +541,9 @@ else
 fi
 
 #------------------------------------------------------------------------------
-# Step 10: Patch Kodi Estuary skin with Sync button
+# Step 11: Patch Kodi Estuary skin with Sync button
 #------------------------------------------------------------------------------
-log_step "[10/11] Patching Kodi skin with Sync button..."
+log_step "[11/12] Patching Kodi skin with Sync button..."
 
 SYSTEM_SKIN_DIR="/usr/share/kodi/addons/skin.estuary"
 USER_SKIN_DIR="${KODI_ADDONS_DIR}/skin.estuary"
@@ -566,9 +581,9 @@ else
 fi
 
 #------------------------------------------------------------------------------
-# Step 11: Install pre-configured Kodi addons database
+# Step 12: Install pre-configured Kodi addons database
 #------------------------------------------------------------------------------
-log_step "[11/11] Installing Kodi addons database template..."
+log_step "[12/12] Installing Kodi addons database template..."
 
 KODI_DB_DIR="${KODI_USER_HOME}/.kodi/userdata/Database"
 KODI_TEMPLATE="${SCRIPT_DIR}/kodi-addon/templates/Database/Addons33.db"
@@ -602,10 +617,12 @@ log "    - Static IP: ${STATIC_IP}"
 log "    - DHCP: ${DHCP_RANGE_START}-${DHCP_RANGE_END}"
 log "    - DLNA: http://${STATIC_IP}:${DLNA_PORT}/"
 log "    - NTP: serving time to clients"
+log "    - NTP trigger: UDP port 9199 (sub-ms sync resume)"
 log ""
 log "  - If no USB storage → Slave mode"
 log "    - DHCP client"
 log "    - NTP client (syncs from master)"
+log "    - NTP trigger: UDP port 9199 (sub-ms sync resume)"
 echo ""
 log "USB mount point: ${USB_MOUNT_POINT}"
 log "Log file: ${LOG_FILE}"
